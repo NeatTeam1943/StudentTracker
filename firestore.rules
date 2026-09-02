@@ -1,0 +1,38 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // A mentor is anyone with a document under /mentors keyed by their uid.
+    // Create those by hand in the console — that is the approval step.
+    function isMentor() {
+      return request.auth != null
+        && exists(/databases/$(database)/documents/mentors/$(request.auth.uid));
+    }
+
+    // Everyone reads. Guests see the same profiles mentors do.
+    match /people/{id} {
+      allow read: if true;
+      allow write: if isMentor();
+    }
+
+    match /meta/{id} {
+      allow read: if true;
+      allow write: if isMentor();
+    }
+
+    // The log is append-only. Nobody edits or deletes history, mentors included.
+    match /events/{id} {
+      allow read: if true;
+      allow create: if isMentor();
+      allow update, delete: if false;
+    }
+
+    // Mentor list is readable so the app can tell whether to show edit controls.
+    // Changing who is a mentor happens in the console, not from the app.
+    match /mentors/{uid} {
+      allow read: if true;
+      allow write: if false;
+    }
+  }
+}
