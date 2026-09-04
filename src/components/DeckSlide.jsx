@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { Fragment, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { badgeSrc, wordmarkSrc } from './ui.jsx'
 
@@ -162,7 +162,9 @@ export default function DeckSlide({ person, membership, rank, categories, order,
             if (!cat || i >= COLUMN_X.length) return null
             const held = (cat.items ?? []).filter((t) => membership?.items?.[t])
             return (
-              <div key={id}>
+              // A Fragment, not a div: a wrapper element here becomes the
+              // positioned child and every column collapses onto one spot.
+              <Fragment key={id}>
                 <div
                   className="deck-col"
                   style={{
@@ -207,7 +209,7 @@ export default function DeckSlide({ person, membership, rank, categories, order,
                     <span>{tool}</span>
                   </div>
                 ))}
-              </div>
+              </Fragment>
             )
           })}
 

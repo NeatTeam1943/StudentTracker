@@ -999,7 +999,20 @@ select option {
   direction: rtl;
 }
 
-.deck-canvas > * {
+.deck-logo,
+.deck-title,
+.deck-col,
+.deck-col-head,
+.deck-rule,
+.deck-chip,
+.deck-card,
+.deck-badge,
+.deck-wordmark,
+.deck-name,
+.deck-role,
+.deck-divider,
+.deck-field,
+.deck-log {
   position: absolute;
 }
 
