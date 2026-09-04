@@ -439,7 +439,7 @@ export function StoreProvider({ children }) {
          `rankId` on each person, with categories and requirements in
          meta/catalog. This folds all of it into a בנייה team without losing
          anything. Safe to re-run — it skips anyone already migrated. */
-      needsMigration: list.some((p) => p.tools && !p.memberships),
+      needsMigration: list.some((p) => !p.memberships && Object.keys(p.tools ?? {}).length > 0),
 
       async migrateToTeams() {
         const old = catalog ?? {}

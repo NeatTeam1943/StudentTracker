@@ -19,8 +19,6 @@ const blank = {
   favoriteTool: '',
   nickname: '',
   isMentor: false,
-  rankId: '',
-  tools: {},
 }
 
 const slugify = (name) =>
@@ -31,7 +29,15 @@ export default function PersonForm() {
   const navigate = useNavigate()
   const store = useStore()
   const existing = id ? store.person(id) : null
-  const [form, setForm] = useState(() => ({ ...blank, ...(existing ?? {}) }))
+  const [form, setForm] = useState(() => {
+    const { memberships, tools, rankId, ...rest } = existing ?? {}
+    return { ...blank, ...rest }
+  })
+  // Which teams this person belongs to, and their rank on the team being viewed.
+  const [teamIds, setTeamIds] = useState(() =>
+    existing ? Object.keys(existing.memberships ?? {}) : [store.teamId],
+  )
+  const [rankId, setRankId] = useState(() => existing?.memberships?.[store.teamId]?.rankId ?? '')
   const [busy, setBusy] = useState(false)
 
   if (!store.isMentor)
@@ -58,9 +64,25 @@ export default function PersonForm() {
     e.preventDefault()
     if (!form.name.trim()) return
     setBusy(true)
-    const person = { ...form, id: form.id || slugify(form.name), rankId: form.rankId || null }
-    await store.savePerson(person)
-    navigate(`/p/${person.id}`)
+    const personId = form.id || slugify(form.name)
+
+    /* Rank and certifications live inside a per-team membership, so the form
+       has to write one. Previously it saved a top-level rankId that nothing
+       read, which is why a new person came out with no team and no rank. */
+    const memberships = { ...(existing?.memberships ?? {}) }
+    for (const t of teamIds) {
+      memberships[t] = memberships[t]
+        ? { ...memberships[t], active: true }
+        : { rankId: null, items: {}, active: true, joinedAt: new Date().toISOString() }
+    }
+    // Unticking a team never deletes the record — it just goes inactive.
+    for (const t of Object.keys(memberships)) {
+      if (!teamIds.includes(t)) memberships[t] = { ...memberships[t], active: false }
+    }
+    if (memberships[store.teamId]) memberships[store.teamId].rankId = rankId || null
+
+    await store.savePerson({ ...form, id: personId, memberships })
+    navigate(`/p/${personId}`)
   }
 
   const archive = async () => {
@@ -174,9 +196,14 @@ export default function PersonForm() {
           </div>
           <div>
             <label className="f" htmlFor="rankId">
-              דרגה
+              דרגה ב{store.team.name}
             </label>
-            <select id="rankId" value={form.rankId ?? ''} onChange={(e) => set({ rankId: e.target.value })}>
+            <select
+              id="rankId"
+              value={rankId}
+              disabled={!teamIds.includes(store.teamId)}
+              onChange={(e) => setRankId(e.target.value)}
+            >
               <option value="">ללא דרגה</option>
               {store.ranks.map((r) => (
                 <option key={r.id} value={r.id}>
@@ -185,6 +212,33 @@ export default function PersonForm() {
               ))}
             </select>
           </div>
+        </div>
+
+        <div style={{ marginTop: 16 }}>
+          <label className="f">צוותים</label>
+          <div className="jump" style={{ marginBottom: 4 }}>
+            {store.teams.map((t) => {
+              const on = teamIds.includes(t.id)
+              return (
+                <button
+                  key={t.id}
+                  type="button"
+                  className={`team-pill${on ? ' on' : ''}`}
+                  onClick={() =>
+                    setTeamIds((v) => (on ? v.filter((x) => x !== t.id) : [...v, t.id]))
+                  }
+                >
+                  {on ? '✓ ' : ''}
+                  {t.name}
+                </button>
+              )
+            })}
+          </div>
+          {teamIds.length === 0 && (
+            <p className="empty" style={{ padding: 0, color: '#ffb020' }}>
+              בלי צוות הוא לא יופיע באף רשימה.
+            </p>
+          )}
         </div>
 
         <p style={{ display: 'flex', gap: 8, marginTop: 18, marginBottom: 0, flexWrap: 'wrap' }}>
