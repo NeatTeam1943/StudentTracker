@@ -330,8 +330,9 @@ button {
 
 .wordmark {
   display: block;
-  margin: 0 auto 2px;
-  max-width: 96px;
+  margin: 0 auto -2px;
+  /* The normalised art has generous padding, so it needs more box to read. */
+  max-width: 132px;
   height: auto;
 }
 
@@ -649,8 +650,8 @@ button {
 }
 
 .tier .wordmark {
-  max-width: 92px;
-  margin: 4px auto 6px;
+  max-width: 150px;
+  margin: 0 auto;
 }
 
 .tier img {
@@ -1107,9 +1108,13 @@ select option {
 }
 
 .deck-wordmark {
-  right: 311.1px;
-  top: 87.6px;
-  width: 137.5px;
+  /* Positioned so the glyph lands where the deck drew it (centre y=129.8),
+     not where the image box starts — the normalised wordmarks centre their
+     text in a taller canvas, which pushed it onto the card border.
+     Centred over the badge, whose centre sits 375.1px from the right edge. */
+  right: 300.1px;
+  top: 108.4px;
+  width: 150px;
   object-fit: contain;
 }
 
