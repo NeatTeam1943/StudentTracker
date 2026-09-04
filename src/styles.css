@@ -25,14 +25,18 @@ html {
 html,
 body,
 #root {
-  height: 100%;
+  /* min-height, not height. A fixed 100% height plus overflow-x turned <body>
+     into its own scroll container, so the page scrolled inside the body box
+     instead of the window — which silently broke scrollIntoView, window.scrollTo
+     and the sticky header. */
+  min-height: 100%;
 }
 
 html,
 body {
-  /* Nothing should ever scroll sideways. A single wide child used to drag the
-     whole page off-screen and clip content on every route. */
-  overflow-x: hidden;
+  /* clip, not hidden: it stops sideways scrolling without creating a scroll
+     container the way overflow: hidden does. */
+  overflow-x: clip;
   max-width: 100%;
 }
 
@@ -499,11 +503,15 @@ button {
 }
 
 .chip .drop-btn {
-  font-size: 17px;
-  font-weight: 800;
+  /* Secondary action: readable, but not competing with the tool name. */
+  flex: 0 0 26px;
+  height: 26px;
+  font-size: 13px;
+  font-weight: 700;
   line-height: 1;
-  color: #000;
-  background: rgba(0, 0, 0, 0.08);
+  color: rgba(0, 0, 0, 0.55);
+  background: transparent;
+  border: 1px solid rgba(0, 0, 0, 0.22);
 }
 
 .chip .drop-btn:active {
@@ -827,6 +835,35 @@ select option {
 /* Phones. The categories stack, but tools go two-up inside each one — one tool
    per full-width row turned 31 tools into an endless scroll. */
 @media (max-width: 700px) {
+  /* Sideways-scrolling strips hide things on a phone: half the nav was off
+     screen, and RTL browsers don't reliably start the scroll at the right edge,
+     so the first pill was clipped too. Wrapping shows everything at once. */
+  .topbar {
+    flex-wrap: wrap;
+    row-gap: 8px;
+  }
+  .nav {
+    order: 3;
+    flex: 1 0 100%;
+    flex-wrap: wrap;
+    overflow-x: visible;
+  }
+  .mentor-chip {
+    margin-inline-start: auto;
+  }
+  .jump,
+  .teams-bar {
+    flex-wrap: wrap;
+    overflow-x: visible;
+  }
+  .nav a,
+  .jump a,
+  .jump button,
+  .team-pill {
+    font-size: 14px;
+    padding: 7px 11px;
+  }
+
   .shell {
     padding: 12px 12px 40px;
     padding-inline: max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-left));
@@ -883,6 +920,23 @@ select option {
   }
 }
 
+/* Landscape on a phone leaves ~330px of height. A sticky header plus a team bar
+   would eat most of it, so let them scroll away and give the content the room. */
+@media (max-height: 520px) and (orientation: landscape) {
+  .topbar {
+    position: static;
+    backdrop-filter: none;
+    background: none;
+    padding-top: 0;
+  }
+  .shell {
+    padding-top: 8px;
+  }
+  .column {
+    scroll-margin-top: 8px;
+  }
+}
+
 @media (max-width: 380px) {
   .tool-list {
     grid-template-columns: 1fr;
@@ -892,5 +946,269 @@ select option {
 @media (prefers-reduced-motion: reduce) {
   * {
     transition: none !important;
+  }
+}
+
+/* ---------- deck view: the profile exactly as the source slide draws it ----- */
+
+.deck-view {
+  position: relative;
+  width: 100%;
+  /* Height is set from JS off the element's real position — the header is a
+     different height on every phone once the nav wraps, and 100vh lies on
+     mobile while the URL bar is showing. */
+  min-height: 240px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  overflow: auto;
+  overscroll-behavior: contain;
+  touch-action: pan-x pan-y;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Centred, but "safe" so that when the slide is zoomed wider than the screen
+   the near edge stays reachable instead of overflowing out of reach. */
+.deck-view,
+.deck-view.fill {
+  justify-content: safe center;
+}
+
+.deck-zoom {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-size: 14px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.deck-canvas-box {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.deck-canvas {
+  position: absolute;
+  /* Explicit left, not inset-inline-start: in RTL that resolves to the right
+     edge while transform-origin stays top-left, and the slide drifts. */
+  left: 0;
+  top: 0;
+  transform-origin: top left;
+  direction: rtl;
+}
+
+.deck-canvas > * {
+  position: absolute;
+}
+
+.deck-logo {
+  left: 9.4px;
+  top: 9.4px;
+  width: 262.7px;
+  height: 69.8px;
+  object-fit: contain;
+}
+
+.deck-title {
+  right: 55px;
+  top: 15.9px;
+  width: 728px;
+  margin: 0;
+  font-size: 46px;
+  font-weight: 900;
+  line-height: 1.15;
+  text-align: right;
+  border-right: 5px solid var(--accent-bright);
+  padding-right: 14px;
+}
+
+.deck-col {
+  border: 2px solid rgba(0, 0, 0, 0.55);
+  border-radius: 18px;
+  background: linear-gradient(180deg, rgba(var(--tint), 0.55), rgba(var(--tint), 0.18));
+}
+
+.deck-col-head {
+  border: 2px solid rgba(0, 0, 0, 0.6);
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  direction: ltr;
+  color: #fff;
+}
+
+.deck-rule {
+  height: 2px;
+  background: rgba(0, 0, 0, 0.55);
+  border-radius: 2px;
+}
+
+.deck-chip {
+  border: 2px solid #000;
+  border-radius: 9px;
+  background: var(--chip);
+  color: #000;
+  font-weight: 700;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 0 6px;
+  text-align: center;
+  line-height: 1.05;
+}
+
+.deck-teach {
+  width: 22px;
+  height: 22px;
+  flex: 0 0 22px;
+}
+
+.deck-card {
+  border: 2px solid var(--panel-line);
+  border-radius: 22px;
+  background: rgba(10, 47, 65, 0.82);
+}
+
+.deck-badge {
+  left: 1000px;
+  top: 140px;
+  width: 161.7px;
+  height: 150px;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 14px rgba(0, 0, 0, 0.6));
+}
+
+.deck-wordmark {
+  left: 1007.4px;
+  top: 87.6px;
+  width: 137.5px;
+  object-fit: contain;
+}
+
+.deck-name {
+  right: 71px;
+  top: 133.6px;
+  width: 260px;
+  text-align: right;
+  font-size: 34px;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.deck-role {
+  right: 71px;
+  top: 196.1px;
+  width: 300px;
+  text-align: right;
+  font-size: 21px;
+  font-weight: 700;
+  color: var(--accent-bright);
+}
+
+.deck-divider {
+  right: 71px;
+  top: 240px;
+  width: 320px;
+  height: 3px;
+  background: var(--accent);
+}
+
+.deck-field {
+  right: 71px;
+  width: 320px;
+  text-align: right;
+  font-size: 19px;
+  line-height: 1.2;
+}
+
+.deck-field .lbl {
+  color: var(--muted);
+}
+
+.deck-field .val {
+  font-weight: 700;
+}
+
+.deck-log {
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  border-radius: 22px;
+  padding: 10px 14px;
+  overflow: hidden;
+  background: rgba(6, 20, 38, 0.5);
+}
+
+.deck-log-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 18px;
+  font-weight: 800;
+  margin-bottom: 6px;
+}
+
+.deck-log-head a {
+  font-size: 14px;
+  color: var(--chip);
+  font-weight: 700;
+}
+
+.deck-log-row {
+  display: flex;
+  gap: 8px;
+  font-size: 14px;
+  padding: 3px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.09);
+}
+
+.deck-log-row time {
+  color: var(--muted);
+  flex: 0 0 74px;
+  font-variant-numeric: tabular-nums;
+}
+
+.deck-log-empty {
+  color: var(--muted);
+  font-size: 14px;
+  margin: 4px 0 0;
+}
+
+.view-toggle {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.deck-hint {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+/* Landscape on a phone has almost no height to spare — trim the chrome above
+   the slide so the slide itself gets the room. */
+@media (max-height: 520px) and (orientation: landscape) {
+  .view-toggle,
+  .deck-zoom {
+    margin-bottom: 4px;
+  }
+  .deck-hint {
+    display: none;
+  }
+  .page-title {
+    margin: 0 0 6px;
+  }
+  .page-title h1 {
+    font-size: 20px;
+  }
+  .page-title .sub {
+    display: none;
   }
 }

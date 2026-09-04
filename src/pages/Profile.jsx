@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useStore } from '../lib/store.jsx'
 import { IdCard, ToolColumns, RankBadge } from '../components/ui.jsx'
+import DeckSlide, { useLandscape } from '../components/DeckSlide.jsx'
 import { displayRank, promotionSuggestion, nextRankProgress, membershipIn } from '../lib/ranks.js'
 
 export default function Profile() {
@@ -9,6 +10,31 @@ export default function Profile() {
   const store = useStore()
   const { ranks, isMentor, teams, team } = store
   const [target, setTarget] = useState('')
+  const landscape = useLandscape()
+  // Deck layout is the default; scroll mode is the comfortable one for editing.
+  // Landscape has the room for the deck, so it switches there on its own.
+  const [view, setView] = useState(() => {
+    try {
+      return localStorage.getItem('neat-tools:view') || 'deck'
+    } catch {
+      return 'deck'
+    }
+  })
+  const [userChose, setUserChose] = useState(false)
+
+  useEffect(() => {
+    if (!userChose) setView(landscape ? 'deck' : (localStorage.getItem('neat-tools:view') || 'deck'))
+  }, [landscape, userChose])
+
+  const pickView = (v) => {
+    setView(v)
+    setUserChose(true)
+    try {
+      localStorage.setItem('neat-tools:view', v)
+    } catch {
+      /* private browsing */
+    }
+  }
 
   if (store.loading) return <p className="empty">טוען…</p>
 
@@ -107,11 +133,42 @@ export default function Profile() {
         </div>
       )}
 
+      {membership && (
+        <div className="view-toggle">
+          <button
+            className={`team-pill${view === 'deck' ? ' on' : ''}`}
+            onClick={() => pickView('deck')}
+          >
+            תצוגת מצגת
+          </button>
+          <button
+            className={`team-pill${view === 'scroll' ? ' on' : ''}`}
+            onClick={() => pickView('scroll')}
+          >
+            תצוגת גלילה
+          </button>
+          {view === 'deck' && <span className="deck-hint">הקישו פעמיים להגדלה</span>}
+        </div>
+      )}
+
+      {membership && view === 'deck' && (
+        <DeckSlide
+          person={person}
+          membership={membership}
+          rank={rank}
+          categories={store.categories}
+          order={store.order}
+          events={store.events}
+          ranks={ranks}
+          mode={landscape && window.innerHeight < 600 ? 'fill' : 'fit'}
+        />
+      )}
+
       <div className="profile">
         <div>
-          <IdCard person={person} rank={rank} />
+          {view !== 'deck' && <IdCard person={person} rank={rank} />}
 
-          {progress && (
+          {progress && view !== 'deck' && (
             <div className="panel" style={{ marginTop: 14 }}>
               <h3>הדרגה הבאה: {progress.next.name}</h3>
               <div className="progress">
@@ -225,7 +282,7 @@ export default function Profile() {
           )}
         </div>
 
-        {membership ? (
+        {membership && view !== 'deck' ? (
           <ToolColumns
             membership={membership}
             categories={store.categories}
@@ -236,7 +293,7 @@ export default function Profile() {
             }
             onToggleTeach={(tool, value) => store.setCanTeach(person.id, tool, value)}
           />
-        ) : (
+        ) : membership ? null : (
           <div className="panel">
             <h3>לא חבר בצוות {team.name}</h3>
             <p className="empty">

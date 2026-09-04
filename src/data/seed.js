@@ -7,8 +7,8 @@ export const CATEGORIES = {
   "basic_training": {
     "label": "BASIC TRAINING",
     "he": "הכשרה בסיסית",
-    "header": "#6D6D6D",
-    "tint": "55,74,91",
+    "header": "#747474",
+    "tint": "255,255,255",
     "items": [
       "ברגים",
       "אומים",
@@ -25,8 +25,8 @@ export const CATEGORIES = {
   "basic_tools": {
     "label": "BASIC TOOLS",
     "he": "כלים בסיסיים",
-    "header": "#04255A",
-    "tint": "32,76,141",
+    "header": "#002060",
+    "tint": "59,130,246",
     "items": [
       "מקדחה",
       "מברגה",
@@ -40,8 +40,8 @@ export const CATEGORIES = {
   "power_tools": {
     "label": "POWER TOOLS",
     "he": "כלי כוח",
-    "header": "#1B4922",
-    "tint": "11,89,101",
+    "header": "#12501B",
+    "tint": "16,185,129",
     "items": [
       "ג'יגסו",
       "דיסק ידני",
@@ -54,8 +54,8 @@ export const CATEGORIES = {
   "bench_tools": {
     "label": "BENCH TOOLS",
     "he": "כלי שולחן",
-    "header": "#653A27",
-    "tint": "142,81,62",
+    "header": "#7F340D",
+    "tint": "249,115,22",
     "items": [
       "מסור שולחן",
       "רצועת שיוף",
@@ -67,8 +67,8 @@ export const CATEGORIES = {
   "heavy_machinery": {
     "label": "HEAVY MACHINERY",
     "he": "מכונות כבדות",
-    "header": "#7A1220",
-    "tint": "81,41,68",
+    "header": "#5E0202",
+    "tint": "239,68,68",
     "items": [
       "מסור סרט",
       "ZK",

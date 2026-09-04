@@ -97,7 +97,8 @@ function ScrollToTop() {
   const { pathname } = useLocation()
   const store = useStore()
   useEffect(() => {
-    window.scrollTo(0, 0)
+    window.scrollTo({ top: 0, behavior: 'auto' })
+    document.documentElement.scrollTop = 0
   }, [pathname, store.teamId])
   return null
 }

@@ -20,6 +20,15 @@ const SWATCHES = [
   { header: '#3B2A6B', tint: '78,64,140' },
 ]
 
+// The exact header colours and panel tints used by the source deck.
+const DECK_PALETTE = {
+  basic_training: { header: '#747474', tint: '255,255,255' },
+  basic_tools: { header: '#002060', tint: '59,130,246' },
+  power_tools: { header: '#12501B', tint: '16,185,129' },
+  bench_tools: { header: '#7F340D', tint: '249,115,22' },
+  heavy_machinery: { header: '#5E0202', tint: '239,68,68' },
+}
+
 const slug = (s) =>
   s.trim().toLowerCase().replace(/[^\w\u0590-\u05FF]+/g, '-').replace(/^-|-$/g, '') || `t${Date.now()}`
 
@@ -215,6 +224,18 @@ export default function Teams() {
             </button>
           </div>
         ))}
+
+        {order.some((id) => DECK_PALETTE[id]) && (
+          <button
+            className="btn sm"
+            style={{ marginTop: 10 }}
+            onClick={() =>
+              order.forEach((id) => DECK_PALETTE[id] && store.updateCategory(id, DECK_PALETTE[id]))
+            }
+          >
+            החזרת צבעי המצגת
+          </button>
+        )}
 
         <form onSubmit={addCategory} style={{ display: 'flex', gap: 8, marginTop: 14, flexWrap: 'wrap' }}>
           <input

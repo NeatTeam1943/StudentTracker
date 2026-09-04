@@ -75,9 +75,12 @@ export function ToolColumns({ membership, categories, order, canEdit, onToggleHe
             key={id}
             type="button"
             style={{ background: categories[id].header }}
-            onClick={() =>
-              document.getElementById(`cat-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-            }
+            onClick={() => {
+              const el = document.getElementById(`cat-${id}`)
+              if (!el) return
+              const top = el.getBoundingClientRect().top + window.scrollY - 84
+              window.scrollTo({ top, behavior: 'smooth' })
+            }}
           >
             {categories[id].he} · {count(id)}/{(categories[id].items ?? []).length}
           </button>
