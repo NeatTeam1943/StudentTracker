@@ -63,8 +63,22 @@ export default function PersonForm() {
     navigate(`/p/${person.id}`)
   }
 
+  const archive = async () => {
+    if (!confirm(`להעביר את ${form.name} לארכיון? הפרופיל וההיסטוריה נשמרים וניתן להחזיר בכל רגע.`)) return
+    setBusy(true)
+    await store.setArchived(form.id, true)
+    navigate('/')
+  }
+
+  const restore = async () => {
+    setBusy(true)
+    await store.setArchived(form.id, false)
+    navigate(`/p/${form.id}`)
+  }
+
+  // Only offered from the archive, so nobody deletes a live profile by accident.
   const remove = async () => {
-    if (!confirm(`למחוק את ${form.name}? הפעולה תירשם ביומן ולא ניתן לבטלה.`)) return
+    if (!confirm(`למחוק לצמיתות את ${form.name}? כל ההסמכות יימחקו ולא ניתן לשחזר.`)) return
     setBusy(true)
     await store.removePerson(form.id)
     navigate('/')
@@ -170,17 +184,27 @@ export default function PersonForm() {
           </div>
         </div>
 
-        <p style={{ display: 'flex', gap: 8, marginTop: 18, marginBottom: 0 }}>
+        <p style={{ display: 'flex', gap: 8, marginTop: 18, marginBottom: 0, flexWrap: 'wrap' }}>
           <button className="btn primary" disabled={busy}>
             {existing ? 'שמירת שינויים' : 'הוספה לצוות'}
           </button>
           <Link className="btn ghost" to={existing ? `/p/${existing.id}` : '/'}>
             ביטול
           </Link>
-          {existing && (
-            <button type="button" className="btn danger" onClick={remove} disabled={busy}>
-              מחיקה
+          {existing && !existing.archived && (
+            <button type="button" className="btn" onClick={archive} disabled={busy}>
+              העברה לארכיון
             </button>
+          )}
+          {existing?.archived && (
+            <>
+              <button type="button" className="btn" onClick={restore} disabled={busy}>
+                החזרה מהארכיון
+              </button>
+              <button type="button" className="btn danger" onClick={remove} disabled={busy}>
+                מחיקה לצמיתות
+              </button>
+            </>
           )}
         </p>
       </form>

@@ -1,27 +1,27 @@
 import { useSearchParams } from 'react-router-dom'
 import { useStore } from '../lib/store.jsx'
 import { badgeSrc, wordmarkSrc } from '../components/ui.jsx'
-import { gapFor, displayRank, rankIndex } from '../lib/ranks.js'
+import { gapFor, displayRank, rankIndex, requirement } from '../lib/ranks.js'
 
 const GATE = { 10: "שכבה י'", 11: "שכבה יא'", 12: "שכבה יב'", 99: 'מנטורים' }
 
 export default function Ladder() {
   const [params, setParams] = useSearchParams()
   const store = useStore()
-  const { ranks, people } = store
+  const { ranks, people, team } = store
 
   if (store.loading) return <p className="empty">טוען…</p>
 
   const viewing = params.get('person')
   const person = viewing ? store.person(viewing) : null
-  const current = person ? displayRank(ranks, person) : null
+  const current = person ? displayRank(ranks, person, team.id) : null
 
   return (
     <>
       <div className="page-title">
         <div>
-          <h1>סולם ההתקדמות</h1>
-          <div className="sub">כל דרגה דורשת את הכלים שלה ואת כל הכלים שלפניה</div>
+          <h1>סולם ההתקדמות · {team.name}</h1>
+          <div className="sub">כל דרגה דורשת את שלה ואת כל מה שלפניה</div>
         </div>
       </div>
 
@@ -37,7 +37,7 @@ export default function Ladder() {
         >
           <option value="">הסולם בלבד</option>
           {people
-            .slice()
+            .filter((p) => !p.archived && p.memberships?.[team.id])
             .sort((a, b) => a.name.localeCompare(b.name, 'he'))
             .map((p) => (
               <option key={p.id} value={p.id}>
@@ -49,24 +49,29 @@ export default function Ladder() {
 
       <div className="ladder">
         {ranks.map((rank) => {
-          const gap = person ? gapFor(ranks, person, rank) : null
+          const gap = person ? gapFor(team, ranks, person, rank) : null
           const reached = current && rankIndex(ranks, rank.id) <= rankIndex(ranks, current.id)
+          const req = requirement(team, ranks, rank.id)
           const cls = person ? (reached ? 'tier reached' : gap.eligible ? 'tier reached' : 'tier locked') : 'tier'
           return (
             <div key={rank.id} className={cls} style={{ color: rank.color }}>
-              <div className="gate">{rank.minGrade ? GATE[rank.minGrade] : ''}</div>
+              <div className="gate">{req.minGrade ? GATE[req.minGrade] : ''}</div>
               <img className="wordmark" src={wordmarkSrc(rank.id)} alt={rank.name} />
               <img src={badgeSrc(rank.badge)} alt="" />
               <div className="reqs">
-                {rank.tools.map((tool) => {
-                  const missing = gap?.missingTools.includes(tool)
+                {req.items.map((tool) => {
+                  const missing = gap?.missingItems.includes(tool)
                   return (
                     <div key={tool} className={`chip${missing ? ' ghost' : ''}`}>
                       <span className="name">{tool}</span>
                     </div>
                   )
                 })}
-                {rank.tools.length === 0 && <div className="empty" style={{ fontSize: 13 }}>ותק ושכבה</div>}
+                {req.items.length === 0 && (
+                  <div className="empty" style={{ fontSize: 13 }}>
+                    {req.minGrade ? 'ותק ושכבה' : 'טרם הוגדר'}
+                  </div>
+                )}
               </div>
             </div>
           )

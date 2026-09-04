@@ -16,8 +16,6 @@ export function RankBadge({ rank, size = 108 }) {
  * Mentors also see the tools they don't hold, as dashed outlines they can tap.
  */
 export function ToolChip({ tool, held, canEdit, onToggleHeld, onToggleTeach }) {
-  const canTeach = held?.canTeach
-
   if (!held) {
     if (!canEdit) return null
     return (
@@ -27,24 +25,32 @@ export function ToolChip({ tool, held, canEdit, onToggleHeld, onToggleTeach }) {
     )
   }
 
-  const title = held.at ? `הוסמך ${new Date(held.at).toLocaleDateString('he-IL')}` : tool
+  const canTeach = held.canTeach
+  const when = held.at ? new Date(held.at).toLocaleDateString('he-IL') : null
 
   return (
-    <div className={`chip${canEdit ? ' editable' : ''}`} title={title}>
+    <div className={`chip${canEdit ? ' editable' : ''}`} title={when ? `הוסמך ${when}` : tool}>
       {(canTeach || canEdit) && (
         <button
           type="button"
-          className={`teach-btn${canTeach ? '' : ' off'}`}
+          className={`teach-btn ${canTeach ? 'on' : 'off'}`}
           disabled={!canEdit}
           onClick={onToggleTeach}
-          aria-label={canTeach ? `${tool}: מלמד אחרים` : `${tool}: סמן כמלמד אחרים`}
+          aria-pressed={canTeach}
+          aria-label={`${tool} — מלמד אחרים`}
         >
           <img className="teach" src={teachIcon} alt="" />
         </button>
       )}
       <span className="name">{tool}</span>
       {canEdit && (
-        <button type="button" className="teach-btn" onClick={onToggleHeld} aria-label={`בטל הסמכה ל${tool}`}>
+        <button
+          type="button"
+          className="drop-btn"
+          // A stray tap here would erase a certification, so it asks first.
+          onClick={() => confirm(`לבטל את ההסמכה ל${tool}?`) && onToggleHeld()}
+          aria-label={`בטל הסמכה ל${tool}`}
+        >
           ✕
         </button>
       )}
@@ -52,46 +58,69 @@ export function ToolChip({ tool, held, canEdit, onToggleHeld, onToggleTeach }) {
   )
 }
 
-export function ToolColumns({ person, categories, order, canEdit, onToggleHeld, onToggleTeach }) {
+export function ToolColumns({ membership, categories, order, canEdit, onToggleHeld, onToggleTeach }) {
+  const held = (t) => membership?.items?.[t]
+  const count = (id) => (categories[id].items ?? []).filter(held).length
+
   return (
-    <div className="columns">
+    <>
+      {/* On a phone the five categories stack, so this is how you reach
+          HEAVY MACHINERY without scrolling past thirty tools. */}
+      <nav className="jump" aria-label="קטגוריות">
+        {order.map((id) => (
+          <a key={id} href={`#cat-${id}`} style={{ background: categories[id].header }}>
+            {categories[id].he} · {count(id)}/{(categories[id].items ?? []).length}
+          </a>
+        ))}
+      </nav>
+      <div className="columns">
       {order.map((id) => {
         const cat = categories[id]
         return (
           <section
             key={id}
+            id={`cat-${id}`}
             className="column"
             style={{ '--tint': cat.tint, '--hdr': cat.header }}
             aria-label={cat.he}
           >
             <h3>{cat.label}</h3>
             <div className="rule" />
-            {cat.tools.map((tool) => (
-              <ToolChip
-                key={tool}
-                tool={tool}
-                held={person.tools?.[tool]}
-                canEdit={canEdit}
-                onToggleHeld={() => onToggleHeld(tool, Boolean(person.tools?.[tool]))}
-                onToggleTeach={() => onToggleTeach(tool, !person.tools?.[tool]?.canTeach)}
-              />
-            ))}
+            <div className="tool-list">
+              {(cat.items ?? []).map((tool) => (
+                <ToolChip
+                  key={tool}
+                  tool={tool}
+                  held={held(tool)}
+                  canEdit={canEdit}
+                  onToggleHeld={() => onToggleHeld(tool, Boolean(held(tool)))}
+                  onToggleTeach={() => onToggleTeach(tool, !held(tool)?.canTeach)}
+                />
+              ))}
+            </div>
           </section>
         )
       })}
-    </div>
+      </div>
+    </>
   )
 }
 
 export function IdCard({ person, rank }) {
   return (
     <aside className="id-card">
-      <div className="badge-slot">
-        {rank && <img className="wordmark" src={wordmarkSrc(rank.id)} alt={rank.name} />}
-        <RankBadge rank={rank} />
+      <div className="card-top">
+        <div className="who">
+          <h2>{person.name}</h2>
+          <div className="role">{person.role}</div>
+        </div>
+        {rank && (
+          <div className="badge-slot">
+            <img className="wordmark" src={wordmarkSrc(rank.id)} alt="" />
+            <img className="badge" src={badgeSrc(rank.badge)} alt={rank.name} />
+          </div>
+        )}
       </div>
-      <h2>{person.name}</h2>
-      <div className="role">{person.role}</div>
       <hr />
       {person.phone && (
         <div className="field">
@@ -104,7 +133,7 @@ export function IdCard({ person, rank }) {
       )}
       <div className="field">
         <span className="ico">🎓</span>
-        <span className="lbl">שכבת לימודים:</span>
+        <span className="lbl">שכבה:</span>
         <span className="val">{person.grade}</span>
       </div>
       {person.favoriteTool && (
@@ -125,8 +154,9 @@ export function IdCard({ person, rank }) {
   )
 }
 
-export function PersonCard({ person, rank }) {
-  const teaches = Object.values(person.tools ?? {}).filter((t) => t?.canTeach).length
+export function PersonCard({ person, rank, membership }) {
+  const items = membership?.items ?? {}
+  const teaches = Object.values(items).filter((t) => t?.canTeach).length
   return (
     <Link to={`/p/${person.id}`} className="card">
       <RankBadge rank={rank} size={58} />
@@ -138,7 +168,7 @@ export function PersonCard({ person, rank }) {
           </div>
         )}
         <div className="meta">
-          {person.role} · {Object.keys(person.tools ?? {}).length} כלים
+          {person.role} · {Object.keys(items).length} הסמכות
         </div>
       </div>
       {teaches > 0 && <span className="flag">מלמד {teaches}</span>}

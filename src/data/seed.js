@@ -83,8 +83,63 @@ export const RANKS = [
     "name": "ניט",
     "badge": "bronze-shield",
     "color": "#8C5A3C",
-    "minGrade": null,
-    "tools": [
+    "minGrade": null
+  },
+  {
+    "id": "niter",
+    "name": "ניטר",
+    "badge": "silver-shield",
+    "color": "#C9CDD4",
+    "minGrade": null
+  },
+  {
+    "id": "nitolog",
+    "name": "ניטולוג",
+    "badge": "gold-gear",
+    "color": "#E8C34A",
+    "minGrade": null
+  },
+  {
+    "id": "nitpro",
+    "name": "ניטפרו",
+    "badge": "steel-gear",
+    "color": "#4FA3E3",
+    "minGrade": null
+  },
+  {
+    "id": "nitprime",
+    "name": "ניטפריים",
+    "badge": "frost",
+    "color": "#00E5C0",
+    "minGrade": 10
+  },
+  {
+    "id": "nitelite",
+    "name": "ניטאליט",
+    "badge": "arcane",
+    "color": "#C77DFF",
+    "minGrade": 11
+  },
+  {
+    "id": "nitmaster",
+    "name": "ניטמאסטר",
+    "badge": "flame",
+    "color": "#FF3B30",
+    "minGrade": 12
+  },
+  {
+    "id": "nitmentor",
+    "name": "ניטמנטור",
+    "badge": "mentor",
+    "color": "#DDE6F2",
+    "minGrade": 99
+  }
+];
+
+// The בנייה scale: what each rank requires on that team.
+export const BUILD_REQUIREMENTS = {
+  "nit": {
+    "items": [
       "ברגים",
       "אומים",
       "חומרים",
@@ -93,15 +148,11 @@ export const RANKS = [
       "זוויות",
       "מפתחות",
       "ניטים"
-    ]
+    ],
+    "minGrade": null
   },
-  {
-    "id": "niter",
-    "name": "ניטר",
-    "badge": "silver-shield",
-    "color": "#C9CDD4",
-    "minGrade": null,
-    "tools": [
+  "niter": {
+    "items": [
       "מקדחה",
       "מברגה",
       "מסור ידני",
@@ -111,74 +162,51 @@ export const RANKS = [
       "רצועת שיוף",
       "מנועים",
       "תמסורות"
-    ]
+    ],
+    "minGrade": null
   },
-  {
-    "id": "nitolog",
-    "name": "ניטולוג",
-    "badge": "gold-gear",
-    "color": "#E8C34A",
-    "minGrade": null,
-    "tools": [
+  "nitolog": {
+    "items": [
       "מקדחת עמוד",
       "משייף חשמלי",
       "ניטר פנאומטי",
       "דיסק ידני",
       "ג'יגסו",
       "מסור שולחן"
-    ]
+    ],
+    "minGrade": null
   },
-  {
-    "id": "nitpro",
-    "name": "ניטפרו",
-    "badge": "steel-gear",
-    "color": "#4FA3E3",
-    "minGrade": null,
-    "tools": [
+  "nitpro": {
+    "items": [
       "דרמל (שיוף)",
       "דרמל (חיתוך)",
       "מולטי-טול",
       "מסור סרט",
       "גריינדר"
-    ]
+    ],
+    "minGrade": null
   },
-  {
-    "id": "nitprime",
-    "name": "ניטפריים",
-    "badge": "frost",
-    "color": "#00E5C0",
-    "minGrade": 10,
-    "tools": [
+  "nitprime": {
+    "items": [
       "דיסק שולחן"
-    ]
+    ],
+    "minGrade": 10
   },
-  {
-    "id": "nitelite",
-    "name": "ניטאליט",
-    "badge": "arcane",
-    "color": "#C77DFF",
-    "minGrade": 11,
-    "tools": [
+  "nitelite": {
+    "items": [
       "ZK"
-    ]
+    ],
+    "minGrade": 11
   },
-  {
-    "id": "nitmaster",
-    "name": "ניטמאסטר",
-    "badge": "flame",
-    "color": "#FF3B30",
-    "minGrade": 12,
-    "tools": []
+  "nitmaster": {
+    "items": [],
+    "minGrade": 12
   },
-  {
-    "id": "nitmentor",
-    "name": "ניטמנטור",
-    "badge": "mentor",
-    "color": "#DDE6F2",
-    "minGrade": 99,
-    "tools": []
+  "nitmentor": {
+    "items": [],
+    "minGrade": 99
   }
-];
+};
 
 export const ROLES = ["חדש", "בנאי", "בנאית", "ראש\"צ בנייה", "ראש\"צית בנייה", "מנטור קבוצה", "מנטור מכניקה"];
 

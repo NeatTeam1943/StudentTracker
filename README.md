@@ -84,18 +84,61 @@ profile, ignoring the requirements entirely.
 Students never see suggestions. They see their own progress bar and what's
 missing, on their profile and on the ladder page.
 
+## Leaving the team
+
+Mentors archive rather than delete. An archived person drops off the roster and
+the advancement picker, but the profile, every certification and the whole log
+stay intact, and one button brings them back. That's what graduating יב' should
+get every June.
+
+Permanent deletion is only offered from an already-archived profile, so a live
+one can't be wiped by a stray tap.
+
+Mentor *access* is separate from this. Someone can be archived as a team member
+while still holding mentor rights, or lose mentor rights while staying on the
+roster — revoke access on the מנטורים page.
+
+## Sub-teams
+
+Each team owns its own scale. בנייה is measured in כלים; another team can be
+measured in הכשרות, or anything else — the noun is a per-team setting. Categories,
+items and rank requirements all belong to the team.
+
+The eight ranks are shared. ניט through ניטמנטור mean the same thing everywhere;
+only what you must do to earn them differs.
+
+A person holds one membership per team, each with its own rank and its own
+record. Someone can be ניטמאסטר in בנייה and ניט in a new team at the same time —
+the badge you see is always the badge for the team you're viewing.
+
+**Transfer keeps everything.** Moving someone to another team marks the old
+membership inactive rather than deleting it: their rank freezes where it is,
+every certification stays, and they still count as able to teach what they could
+teach. They just stop earning new ranks there and drop off that roster. Reactivating
+restores them exactly. "צירוף בנוסף" adds a team without leaving the old one, for
+people who genuinely work in both.
+
+A rank with no requirements and no grade gate is treated as unconfigured and can
+never be earned. Without that, everyone on a brand new team would instantly
+qualify for the top badge.
+
 ## Data shape
 
 ```
+teams/{id}     { name, itemNoun, itemNounSingular, sort,
+                 categories: { <id>: { he, label, header, tint, items: [...] } },
+                 order: [...],
+                 requirements: { <rankId>: { items: [...], minGrade } } }
+meta/catalog   { ranks }                    -- global, shared by every team
 people/{id}    { name, role, phone, grade, gradeNum, favoriteTool, nickname,
-                 isMentor, rankId,
-                 tools: { "מקדחה": { at, by, canTeach, teachAt }, … } }
-meta/catalog   { categories, order, ranks }
+                 isMentor, archived,
+                 memberships: { <teamId>: { rankId, active, joinedAt,
+                   items: { "מקדחה": { at, by, canTeach, teachAt } } } } }
 mentors/{uid}  existence = can write
 events/{id}    { at, by, byUid, type, personId, tool, from, to }
 ```
 
-Tools live inside the person document so the roster costs one read per person
+Items live inside the person document so the roster costs one read per person
 instead of one per certification. Thirteen people is thirteen reads against a
 daily free quota of fifty thousand.
 
@@ -103,8 +146,8 @@ daily free quota of fifty thousand.
 mentors included. Grants, revocations, promotions, teaching permissions and
 roster changes all land there with a timestamp and who did it.
 
-`meta/catalog` holds the ladder as data, so the requirements can change from the
-Tools page without a deploy.
+Requirements live in the team document as data, so the ladder can change from the
+צוותים page without a deploy.
 
 ## Notes
 

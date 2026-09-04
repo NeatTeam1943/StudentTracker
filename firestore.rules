@@ -3,15 +3,19 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // A mentor is anyone with a document under /mentors keyed by their uid.
-    // Create those by hand in the console — that is the approval step.
     function isMentor() {
       return request.auth != null
         && exists(/databases/$(database)/documents/mentors/$(request.auth.uid));
     }
 
-    // Everyone reads. Guests see the same profiles mentors do.
+    // Everyone reads. Guests see the same profiles mentors do, with no sign-in.
     match /people/{id} {
+      allow read: if true;
+      allow write: if isMentor();
+    }
+
+    // One sub-team: its categories, its items, its rank requirements.
+    match /teams/{id} {
       allow read: if true;
       allow write: if isMentor();
     }
@@ -28,11 +32,21 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
-    // Mentor list is readable so the app can tell whether to show edit controls.
-    // Changing who is a mentor happens in the console, not from the app.
+    // Anyone signed in can ask for mentor access, and only for themselves —
+    // request.auth.uid == uid stops one person requesting on another's behalf.
+    match /mentorRequests/{uid} {
+      allow read: if isMentor() || (request.auth != null && request.auth.uid == uid);
+      allow create: if request.auth != null && request.auth.uid == uid;
+      allow delete: if isMentor() || (request.auth != null && request.auth.uid == uid);
+      allow update: if false;
+    }
+
+    // Existing mentors approve new ones from the מנטורים page.
+    // Readable by all so the app knows whether to show edit controls.
     match /mentors/{uid} {
       allow read: if true;
-      allow write: if false;
+      allow create, delete: if isMentor();
+      allow update: if false;
     }
   }
 }

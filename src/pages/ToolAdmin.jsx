@@ -3,7 +3,7 @@ import { useStore } from '../lib/store.jsx'
 
 export default function ToolAdmin() {
   const store = useStore()
-  const { categories, order, people } = store
+  const { categories, order, team } = store
   const [draft, setDraft] = useState({ category: order[0], name: '' })
   const [renaming, setRenaming] = useState(null)
 
@@ -15,7 +15,7 @@ export default function ToolAdmin() {
       </div>
     )
 
-  const holders = (tool) => people.filter((p) => p.tools?.[tool]).length
+  const holders = (tool) => store.roster.filter((p) => p.memberships?.[team.id]?.items?.[tool]).length
 
   const add = (e) => {
     e.preventDefault()
@@ -36,13 +36,13 @@ export default function ToolAdmin() {
     <>
       <div className="page-title">
         <div>
-          <h1>ניהול כלים</h1>
-          <div className="sub">שינוי כאן משפיע על כל הפרופילים ועל סולם ההתקדמות</div>
+          <h1>ניהול {team.itemNoun} · {team.name}</h1>
+          <div className="sub">שינוי כאן משפיע על הפרופילים בצוות זה ועל סולם ההתקדמות שלו</div>
         </div>
       </div>
 
       <form className="panel" onSubmit={add}>
-        <h3>הוספת כלי</h3>
+        <h3>הוספת {team.itemNounSingular}</h3>
         <div className="form-grid">
           <div>
             <label className="f" htmlFor="cat">
@@ -58,7 +58,7 @@ export default function ToolAdmin() {
           </div>
           <div>
             <label className="f" htmlFor="tool">
-              שם הכלי
+              שם ה{team.itemNounSingular}
             </label>
             <input id="tool" value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} />
           </div>
@@ -68,6 +68,13 @@ export default function ToolAdmin() {
         </div>
       </form>
 
+      {order.length === 0 && (
+        <div className="panel">
+          <h3>אין עדיין קטגוריות</h3>
+          <p className="empty">צרו קטגוריה בעמוד הצוותים לפני הוספת {team.itemNoun}.</p>
+        </div>
+      )}
+
       {order.map((catId) => (
         <div className="panel" key={catId}>
           <h3>
@@ -76,14 +83,14 @@ export default function ToolAdmin() {
           <table>
             <thead>
               <tr>
-                <th>כלי</th>
+                <th>{team.itemNounSingular}</th>
                 <th>מוסמכים</th>
                 <th>העברה לקטגוריה</th>
                 <th />
               </tr>
             </thead>
             <tbody>
-              {categories[catId].tools.map((tool) => (
+              {(categories[catId].items ?? []).map((tool) => (
                 <tr key={tool}>
                   <td>
                     {renaming === tool ? (
