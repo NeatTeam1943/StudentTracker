@@ -28,6 +28,14 @@ function describe(e, nameOf, rankName) {
       return `${who} כבר לא מלמד ${e.tool}`
     case 'promoted':
       return `${who} קודם ל${rankName(e.to)}${e.from ? ` (מ${rankName(e.from)})` : ''}`
+    case 'rank_auto':
+      return e.to
+        ? `${who} עודכן אוטומטית ל${rankName(e.to)}`
+        : `הדרגה של ${who} בוטלה אוטומטית`
+    case 'auto_rank_on':
+      return `${who} חזר לעדכון דרגה אוטומטי`
+    case 'auto_rank_off':
+      return `${who} הועבר לקביעת דרגה ידנית`
     case 'rank_set':
       return `הדרגה של ${who} נקבעה ידנית ל${rankName(e.to)}`
     case 'person_added':

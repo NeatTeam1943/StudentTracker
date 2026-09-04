@@ -90,7 +90,10 @@ export default function Roster() {
   const archive = [...store.roster.filter((p) => p.archived), ...store.alumni]
 
   const suggestions = isMentor
-    ? active.map((p) => [p, promotionSuggestion(team, ranks, p)]).filter(([, s]) => s)
+    ? active
+        .filter((p) => p.memberships?.[team.id]?.autoRank === false)
+        .map((p) => [p, promotionSuggestion(team, ranks, p)])
+        .filter(([, s]) => s)
     : []
 
   const card = (p) => (

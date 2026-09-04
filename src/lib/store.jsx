@@ -18,6 +18,7 @@ import {
 import { signInWithPopup, signOut as fbSignOut, onAuthStateChanged } from 'firebase/auth'
 import { db, auth, googleProvider } from './firebase.js'
 import { CATEGORIES, CATEGORY_ORDER, RANKS, BUILD_REQUIREMENTS, SEED_PEOPLE } from '../data/seed.js'
+import { earnedRank } from './ranks.js'
 
 /*
  * Every read and write in the app goes through this module.
@@ -193,6 +194,25 @@ export function StoreProvider({ children }) {
 
       // --- certifications, scoped to the active team ------------------------
 
+      /* Keeps the rank in step with the certifications. Only runs while the
+         membership is on automatic — a mentor who set a rank by hand has said
+         this person is an exception, and that decision stands. */
+      async syncRank(id) {
+        const p = find(id)
+        const m = p?.memberships?.[team.id]
+        if (!m || m.autoRank === false) return
+        const earned = earnedRank(team, catalog?.ranks ?? RANKS, p)?.id ?? null
+        if (earned === (m.rankId ?? null)) return
+        await updateDoc(personRef(id), new FieldPath('memberships', team.id, 'rankId'), earned)
+        await log({ type: 'rank_auto', personId: id, from: m.rankId ?? null, to: earned, teamId: team.id })
+      },
+
+      async setAutoRank(id, value) {
+        await updateDoc(personRef(id), new FieldPath('memberships', team.id, 'autoRank'), value)
+        await log({ type: value ? 'auto_rank_on' : 'auto_rank_off', personId: id, teamId: team.id })
+        if (value) await this.syncRank(id)
+      },
+
       async grantTool(id, item) {
         await updateDoc(personRef(id), new FieldPath('memberships', team.id, 'items', item), {
           at: stamp(),
@@ -201,11 +221,13 @@ export function StoreProvider({ children }) {
           teachAt: null,
         })
         await log({ type: 'tool_granted', personId: id, tool: item, teamId: team.id })
+        await this.syncRank(id)
       },
 
       async revokeTool(id, item) {
         await updateDoc(personRef(id), new FieldPath('memberships', team.id, 'items', item), deleteField())
         await log({ type: 'tool_revoked', personId: id, tool: item, teamId: team.id })
+        await this.syncRank(id)
       },
 
       async setCanTeach(id, item, value) {
@@ -222,6 +244,9 @@ export function StoreProvider({ children }) {
         const before = find(id)?.memberships?.[team.id]?.rankId ?? null
         if (before === rankId) return
         await updateDoc(personRef(id), new FieldPath('memberships', team.id, 'rankId'), rankId)
+        if (manual) {
+          await updateDoc(personRef(id), new FieldPath('memberships', team.id, 'autoRank'), false)
+        }
         await log({
           type: manual ? 'rank_set' : 'promoted',
           personId: id,

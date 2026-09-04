@@ -51,7 +51,12 @@ export default function Profile() {
 
   const membership = membershipIn(person, team.id)
   const rank = displayRank(ranks, person, team.id)
-  const suggestion = isMentor && membership ? promotionSuggestion(team, ranks, person) : null
+  // Only meaningful for a membership pinned to manual — an automatic one is
+  // already at its earned rank.
+  const suggestion =
+    isMentor && membership && membership.autoRank === false
+      ? promotionSuggestion(team, ranks, person)
+      : null
   const progress = membership ? nextRankProgress(team, ranks, person) : null
   const otherTeams = teams.filter((t) => t.id !== team.id)
   const inactiveHere = membership && membership.active === false
@@ -211,12 +216,25 @@ export default function Profile() {
 
               {membership && (
                 <>
-                  <label className="f" htmlFor="rank">
-                    קביעת דרגה ידנית ב{team.name}
-                  </label>
+                  <label className="f">דרגה ב{team.name}</label>
+                  <p style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', margin: '0 0 8px' }}>
+                    <button
+                      className={`team-pill${membership.autoRank !== false ? ' on' : ''}`}
+                      onClick={() => store.setAutoRank(person.id, true)}
+                    >
+                      אוטומטי
+                    </button>
+                    <button
+                      className={`team-pill${membership.autoRank === false ? ' on' : ''}`}
+                      onClick={() => store.setAutoRank(person.id, false)}
+                    >
+                      ידני
+                    </button>
+                  </p>
                   <select
                     id="rank"
                     value={membership.rankId ?? ''}
+                    disabled={membership.autoRank !== false}
                     onChange={(e) => store.setRank(person.id, e.target.value || null, true)}
                   >
                     <option value="">ללא דרגה</option>
@@ -226,6 +244,11 @@ export default function Profile() {
                       </option>
                     ))}
                   </select>
+                  <p className="empty" style={{ padding: '6px 0 0', marginBottom: 0 }}>
+                    {membership.autoRank !== false
+                      ? 'הדרגה מתעדכנת לבד לפי ההסמכות. עברו ל"ידני" כדי לקבוע חריג.'
+                      : 'דרגה שנקבעה ידנית. היא לא תשתנה עם ההסמכות עד שתחזירו לאוטומטי.'}
+                  </p>
                 </>
               )}
 
