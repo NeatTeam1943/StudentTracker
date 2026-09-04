@@ -16,6 +16,7 @@ export default function Roster() {
   const { team, ranks, isMentor } = store
   const [importing, setImporting] = useState(false)
   const [showArchived, setShowArchived] = useState(false)
+  const [migrating, setMigrating] = useState(false)
   const [showAlumni, setShowAlumni] = useState(false)
 
   if (store.loading) return <p className="empty">טוען…</p>
@@ -48,6 +49,39 @@ export default function Roster() {
           </>
         ) : (
           <p className="empty">המערכת עדיין לא אוישה. חזרו מאוחר יותר.</p>
+        )}
+      </div>
+    )
+
+  // Data from before sub-teams existed. Nobody has a membership yet, so every
+  // roster would look empty until this runs.
+  if (store.needsMigration)
+    return (
+      <div className="panel">
+        <h3>יש לעדכן את מבנה הנתונים</h3>
+        {isMentor ? (
+          <>
+            <p className="empty">
+              הנתונים הקיימים נשמרו לפני שהמערכת תמכה בכמה צוותים. העדכון משייך את כל
+              חברי הצוות הקיימים לצוות בנייה יחד עם ההסמכות והדרגות שלהם. שום דבר לא נמחק.
+            </p>
+            <button
+              className="btn primary"
+              disabled={migrating}
+              onClick={async () => {
+                setMigrating(true)
+                try {
+                  await store.migrateToTeams()
+                } catch {
+                  setMigrating(false)
+                }
+              }}
+            >
+              {migrating ? 'מעדכן…' : 'עדכון הנתונים'}
+            </button>
+          </>
+        ) : (
+          <p className="empty">המערכת בתחזוקה. נסו שוב בקרוב.</p>
         )}
       </div>
     )

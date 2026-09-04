@@ -78,6 +78,8 @@ function describe(e, nameOf, rankName) {
       return `הקטגוריה ${e.category} נמחקה`
     case 'ranks_updated':
       return 'הדרגות עודכנו'
+    case 'migrated_to_teams':
+      return `${e.count} חברי צוות שויכו לצוות בנייה`
     case 'deck_imported':
       return `יובאו ${e.count} חברי צוות מהמצגת`
     default:

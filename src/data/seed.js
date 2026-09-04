@@ -9,7 +9,7 @@ export const CATEGORIES = {
     "he": "הכשרה בסיסית",
     "header": "#6D6D6D",
     "tint": "55,74,91",
-    "tools": [
+    "items": [
       "ברגים",
       "אומים",
       "חומרים",
@@ -27,7 +27,7 @@ export const CATEGORIES = {
     "he": "כלים בסיסיים",
     "header": "#04255A",
     "tint": "32,76,141",
-    "tools": [
+    "items": [
       "מקדחה",
       "מברגה",
       "ניטר פנאומטי",
@@ -42,7 +42,7 @@ export const CATEGORIES = {
     "he": "כלי כוח",
     "header": "#1B4922",
     "tint": "11,89,101",
-    "tools": [
+    "items": [
       "ג'יגסו",
       "דיסק ידני",
       "דרמל (שיוף)",
@@ -56,7 +56,7 @@ export const CATEGORIES = {
     "he": "כלי שולחן",
     "header": "#653A27",
     "tint": "142,81,62",
-    "tools": [
+    "items": [
       "מסור שולחן",
       "רצועת שיוף",
       "מקדחת עמוד",
@@ -69,7 +69,7 @@ export const CATEGORIES = {
     "he": "מכונות כבדות",
     "header": "#7A1220",
     "tint": "81,41,68",
-    "tools": [
+    "items": [
       "מסור סרט",
       "ZK",
       "מחרטה"

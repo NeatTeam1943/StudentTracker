@@ -23,7 +23,19 @@ jobs:
         with:
           node-version: 20
           cache: npm
-      - run: npm ci
+
+      # The Firebase SDK is ~12,000 files, and npm ci deletes node_modules and
+      # re-extracts all of them every run. Caching the installed tree keyed on
+      # the lockfile skips that entirely — a cache hit restores in seconds.
+      - id: modules
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: node-modules-${{ runner.os }}-node20-${{ hashFiles('package-lock.json') }}
+
+      - if: steps.modules.outputs.cache-hit != 'true'
+        run: npm ci --prefer-offline --no-audit --fund=false
+
       # Firebase config comes from the committed .env file.
       - run: npm run build
       - uses: actions/upload-pages-artifact@v3

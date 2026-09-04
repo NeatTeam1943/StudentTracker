@@ -435,6 +435,81 @@ export function StoreProvider({ children }) {
 
       // --- one-time setup ---------------------------------------------------
 
+      /* Data written before sub-teams existed: a flat `tools` map and a single
+         `rankId` on each person, with categories and requirements in
+         meta/catalog. This folds all of it into a בנייה team without losing
+         anything. Safe to re-run — it skips anyone already migrated. */
+      needsMigration: list.some((p) => p.tools && !p.memberships),
+
+      async migrateToTeams() {
+        const old = catalog ?? {}
+        const oldRanks = old.ranks?.length ? old.ranks : RANKS
+
+        // Requirements used to hang off each rank; categories called their list
+        // `tools` where teams call it `items`.
+        const requirements = Object.fromEntries(
+          oldRanks.map((r) => [
+            r.id,
+            { items: r.tools ?? BUILD_REQUIREMENTS[r.id]?.items ?? [], minGrade: r.minGrade ?? null },
+          ]),
+        )
+        const source = old.categories ?? CATEGORIES
+        const cats = Object.fromEntries(
+          Object.entries(source).map(([id, c]) => {
+            const { tools, ...rest } = c
+            return [id, { ...rest, items: c.items ?? tools ?? [] }]
+          }),
+        )
+
+        await setDoc(
+          doc(db, 'teams', 'build'),
+          {
+            name: BUILD_TEAM.name,
+            itemNoun: BUILD_TEAM.itemNoun,
+            itemNounSingular: BUILD_TEAM.itemNounSingular,
+            sort: 0,
+            categories: cats,
+            order: old.order ?? CATEGORY_ORDER,
+            requirements,
+          },
+          { merge: true },
+        )
+
+        // Ranks stay global, but without their per-team tool lists.
+        await setDoc(
+          doc(db, 'meta', 'catalog'),
+          {
+            ranks: oldRanks.map(({ tools, ...r }) => r),
+            categories: deleteField(),
+            order: deleteField(),
+          },
+          { merge: true },
+        )
+
+        let moved = 0
+        for (const p of list) {
+          if (p.memberships) continue
+          await setDoc(
+            personRef(p.id),
+            {
+              memberships: {
+                build: {
+                  rankId: p.rankId ?? null,
+                  items: p.tools ?? {},
+                  active: true,
+                  joinedAt: p.joinedAt ?? stamp(),
+                },
+              },
+              tools: deleteField(),
+              rankId: deleteField(),
+            },
+            { merge: true },
+          )
+          moved++
+        }
+        await log({ type: 'migrated_to_teams', count: moved })
+      },
+
       async importFromDeck() {
         const at = stamp()
         await setDoc(doc(db, 'meta', 'catalog'), { ranks: RANKS }, { merge: true })
