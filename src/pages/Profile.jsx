@@ -163,10 +163,8 @@ export default function Profile() {
               {deckEdit ? 'סיום עריכה' : 'עריכה'}
             </button>
           )}
-          {view === 'deck' && (
-            <span className="deck-hint">
-              {deckEdit ? 'לחצו על כלי כדי להסמיך או לבטל' : 'הקישו פעמיים להגדלה'}
-            </span>
+          {view === 'deck' && deckEdit && (
+            <span className="deck-hint">לחצו על כלי כדי להסמיך או לבטל</span>
           )}
         </div>
       )}
