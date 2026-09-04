@@ -197,14 +197,24 @@ export function StoreProvider({ children }) {
       /* Keeps the rank in step with the certifications. Only runs while the
          membership is on automatic — a mentor who set a rank by hand has said
          this person is an exception, and that decision stands. */
-      async syncRank(id) {
-        const p = find(id)
-        const m = p?.memberships?.[team.id]
-        if (!m || m.autoRank === false) return
+      /*
+       * Takes the membership as it will be *after* the write, not as the local
+       * snapshot currently has it. Reading find(id) here computed the rank from
+       * the pre-write tool list, so nothing ever changed until the snapshot
+       * caught up and something triggered a second pass — which is why the
+       * rank only moved when you pressed "אוטומטי" again.
+       */
+      async syncRankWith(id, membership) {
+        if (!membership || membership.autoRank === false) return
+        const p = { ...find(id), memberships: { ...(find(id)?.memberships ?? {}), [team.id]: membership } }
         const earned = earnedRank(team, catalog?.ranks ?? RANKS, p)?.id ?? null
-        if (earned === (m.rankId ?? null)) return
+        if (earned === (membership.rankId ?? null)) return
         await updateDoc(personRef(id), new FieldPath('memberships', team.id, 'rankId'), earned)
-        await log({ type: 'rank_auto', personId: id, from: m.rankId ?? null, to: earned, teamId: team.id })
+        await log({ type: 'rank_auto', personId: id, from: membership.rankId ?? null, to: earned, teamId: team.id })
+      },
+
+      syncRank(id) {
+        return this.syncRankWith(id, find(id)?.memberships?.[team.id])
       },
 
       async setAutoRank(id, value) {
@@ -214,20 +224,20 @@ export function StoreProvider({ children }) {
       },
 
       async grantTool(id, item) {
-        await updateDoc(personRef(id), new FieldPath('memberships', team.id, 'items', item), {
-          at: stamp(),
-          by: user?.displayName ?? '—',
-          canTeach: false,
-          teachAt: null,
-        })
+        const m = find(id)?.memberships?.[team.id] ?? {}
+        const entry = { at: stamp(), by: user?.displayName ?? '—', canTeach: false, teachAt: null }
+        await updateDoc(personRef(id), new FieldPath('memberships', team.id, 'items', item), entry)
         await log({ type: 'tool_granted', personId: id, tool: item, teamId: team.id })
-        await this.syncRank(id)
+        await this.syncRankWith(id, { ...m, items: { ...(m.items ?? {}), [item]: entry } })
       },
 
       async revokeTool(id, item) {
+        const m = find(id)?.memberships?.[team.id] ?? {}
+        const items = { ...(m.items ?? {}) }
+        delete items[item]
         await updateDoc(personRef(id), new FieldPath('memberships', team.id, 'items', item), deleteField())
         await log({ type: 'tool_revoked', personId: id, tool: item, teamId: team.id })
-        await this.syncRank(id)
+        await this.syncRankWith(id, { ...m, items })
       },
 
       async setCanTeach(id, item, value) {
@@ -364,9 +374,13 @@ export function StoreProvider({ children }) {
         await Promise.all(
           list
             .filter((p) => p.memberships?.[team.id]?.items?.[item])
-            .map((p) =>
-              updateDoc(personRef(p.id), new FieldPath('memberships', team.id, 'items', item), deleteField()),
-            ),
+            .map(async (p) => {
+              await updateDoc(personRef(p.id), new FieldPath('memberships', team.id, 'items', item), deleteField())
+              const m = p.memberships[team.id]
+              const items = { ...m.items }
+              delete items[item]
+              await this.syncRankWith(p.id, { ...m, items })
+            }),
         )
       },
 
@@ -389,11 +403,33 @@ export function StoreProvider({ children }) {
       async deleteCategory(id) {
         const cats = structuredClone(categories)
         const name = cats[id]?.he
+        const doomed = cats[id]?.items ?? []
         delete cats[id]
+
+        // Its items go too — otherwise people keep certifications for tools that
+        // no longer exist anywhere, and their counts never come down.
+        const reqs = structuredClone(team.requirements ?? {})
+        for (const r of Object.values(reqs)) r.items = (r.items ?? []).filter((t) => !doomed.includes(t))
+
         await saveTeam(
           team.id,
-          { categories: cats, order: (team.order ?? []).filter((x) => x !== id) },
+          { categories: cats, order: (team.order ?? []).filter((x) => x !== id), requirements: reqs },
           { type: 'category_deleted', category: name },
+        )
+
+        await Promise.all(
+          list.map(async (p) => {
+            const m = p.memberships?.[team.id]
+            if (!m?.items) return
+            const gone = doomed.filter((t) => m.items[t])
+            if (!gone.length) return
+            for (const t of gone) {
+              await updateDoc(personRef(p.id), new FieldPath('memberships', team.id, 'items', t), deleteField())
+            }
+            const items = { ...m.items }
+            for (const t of gone) delete items[t]
+            await this.syncRankWith(p.id, { ...m, items })
+          }),
         )
       },
 

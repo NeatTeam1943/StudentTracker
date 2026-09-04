@@ -1280,3 +1280,51 @@ select option {
 .tools-pane {
   min-width: 0;
 }
+
+/* Deck view, edit mode: un-held tools show as outlines a mentor can tap. */
+.deck-chip.ghost {
+  background: transparent;
+  border-style: dashed;
+  border-color: rgba(255, 255, 255, 0.4);
+  color: rgba(255, 255, 255, 0.7);
+  font-weight: 600;
+}
+
+.deck-chip.editable {
+  cursor: pointer;
+}
+
+.deck-chip.editable:hover {
+  filter: brightness(1.1);
+}
+
+.deck-chip.ghost.editable:hover {
+  background: rgba(0, 255, 200, 0.14);
+  border-color: var(--chip);
+  color: #fff;
+}
+
+.deck-teach-btn {
+  border: 0;
+  padding: 0;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 5px;
+  line-height: 0;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  flex: 0 0 26px;
+}
+
+.deck-teach-btn.on {
+  background: #000;
+}
+
+.deck-teach-btn.on .deck-teach {
+  filter: invert(1);
+}
+
+.deck-teach-btn.off {
+  opacity: 0.4;
+}

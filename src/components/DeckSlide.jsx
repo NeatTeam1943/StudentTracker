@@ -32,6 +32,14 @@ const CHIP_H = 40.3
 const CHIP_Y0 = 192.2
 const CHIP_STEP = 51.6
 
+/** Fits n chips inside the column, tightening the step if there are many. */
+function chipRows(n) {
+  const room = COLUMN_H - (CHIP_Y0 - COLUMN_Y) - 10
+  if (n <= 1) return { step: CHIP_STEP, h: CHIP_H }
+  const step = Math.min(CHIP_STEP, room / n)
+  return { step, h: Math.min(CHIP_H, step - 5) }
+}
+
 function columnLayout(count) {
   const n = Math.max(1, count)
   let colW = (AREA_W - GAP * (n - 1)) / n
@@ -150,7 +158,21 @@ function LogPanel({ events, personId, ranks }) {
   )
 }
 
-export default function DeckSlide({ person, membership, rank, categories, order, mode, events, ranks, favoriteLabel = 'כלי אהוב', favorite }) {
+export default function DeckSlide({
+  person,
+  membership,
+  rank,
+  categories,
+  order,
+  mode,
+  events,
+  ranks,
+  favoriteLabel = 'כלי אהוב',
+  favorite,
+  canEdit = false,
+  onToggleHeld,
+  onToggleTeach,
+}) {
   // Fitting a 1456px slide onto a phone makes the text tiny, so it can be
   // zoomed and dragged rather than only squinted at.
   const [zoom, setZoom] = useState(1)
@@ -190,7 +212,12 @@ export default function DeckSlide({ person, membership, rank, categories, order,
           {order.map((id, i) => {
             const cat = categories[id]
             if (!cat) return null
-            const held = (cat.items ?? []).filter((t) => membership?.items?.[t])
+            const owned = (cat.items ?? []).filter((t) => membership?.items?.[t])
+            // In edit mode the un-held tools appear as outlines so a mentor can
+            // grant them here; otherwise the slide shows only what's held, as
+            // the deck does.
+            const shown = canEdit ? [...owned, ...(cat.items ?? []).filter((t) => !membership?.items?.[t])] : owned
+            const rows = chipRows(shown.length)
             return (
               // A Fragment, not a div: a wrapper element here becomes the
               // positioned child and every column collapses onto one spot.
@@ -217,24 +244,39 @@ export default function DeckSlide({ person, membership, rank, categories, order,
                   style={{ left: L.x(i) + 8, top: HEADER_Y + HEADER_H + 14, width: L.colW - 16 }}
                 />
                 {/* The deck shows only what someone holds — never the gaps. */}
-                {held.map((tool, n) => (
-                  <div
-                    key={tool}
-                    className="deck-chip"
-                    style={{
-                      left: L.x(i) + (L.colW - L.chipW) / 2,
-                      top: CHIP_Y0 + n * CHIP_STEP,
-                      width: L.chipW,
-                      height: CHIP_H,
-                      fontSize: L.chipFont,
-                    }}
-                  >
-                    {membership.items[tool]?.canTeach && (
-                      <img className="deck-teach" src={`${import.meta.env.BASE_URL}assets/teach.png`} alt="" />
-                    )}
-                    <span>{tool}</span>
-                  </div>
-                ))}
+                {shown.map((tool, n) => {
+                  const has = membership?.items?.[tool]
+                  return (
+                    <div
+                      key={tool}
+                      className={`deck-chip${has ? '' : ' ghost'}${canEdit ? ' editable' : ''}`}
+                      style={{
+                        left: L.x(i) + (L.colW - L.chipW) / 2,
+                        top: CHIP_Y0 + n * rows.step,
+                        width: L.chipW,
+                        height: rows.h,
+                        fontSize: L.chipFont,
+                      }}
+                      onClick={canEdit ? () => onToggleHeld?.(tool, Boolean(has)) : undefined}
+                    >
+                      {has && (canEdit || has.canTeach) && (
+                        <button
+                          type="button"
+                          className={`deck-teach-btn ${has.canTeach ? 'on' : 'off'}`}
+                          disabled={!canEdit}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            onToggleTeach?.(tool, !has.canTeach)
+                          }}
+                          aria-label={`${tool} — מלמד אחרים`}
+                        >
+                          <img className="deck-teach" src={`${import.meta.env.BASE_URL}assets/teach.png`} alt="" />
+                        </button>
+                      )}
+                      <span>{tool}</span>
+                    </div>
+                  )
+                })}
               </Fragment>
             )
           })}

@@ -21,6 +21,7 @@ export default function Profile() {
     }
   })
   const [userChose, setUserChose] = useState(false)
+  const [deckEdit, setDeckEdit] = useState(false)
 
   useEffect(() => {
     if (!userChose) setView(landscape ? 'deck' : (localStorage.getItem('neat-tools:view') || 'deck'))
@@ -153,7 +154,19 @@ export default function Profile() {
           >
             תצוגת גלילה
           </button>
-          {view === 'deck' && <span className="deck-hint">הקישו פעמיים להגדלה</span>}
+          {view === 'deck' && isMentor && membership && !inactiveHere && (
+            <button
+              className={`team-pill${deckEdit ? ' on' : ''}`}
+              onClick={() => setDeckEdit((v) => !v)}
+            >
+              {deckEdit ? 'סיום עריכה' : 'עריכה'}
+            </button>
+          )}
+          {view === 'deck' && (
+            <span className="deck-hint">
+              {deckEdit ? 'לחצו על כלי כדי להסמיך או לבטל' : 'הקישו פעמיים להגדלה'}
+            </span>
+          )}
         </div>
       )}
 
@@ -169,6 +182,11 @@ export default function Profile() {
           favoriteLabel={team.favoriteLabel ?? 'כלי אהוב'}
           favorite={favoriteOf(person, team.id)}
           mode={landscape && window.innerHeight < 600 ? 'fill' : 'fit'}
+          canEdit={deckEdit && isMentor && !inactiveHere}
+          onToggleHeld={(tool, has) =>
+            has ? store.revokeTool(person.id, tool) : store.grantTool(person.id, tool)
+          }
+          onToggleTeach={(tool, value) => store.setCanTeach(person.id, tool, value)}
         />
       )}
 
