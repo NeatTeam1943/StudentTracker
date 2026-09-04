@@ -1295,10 +1295,6 @@ select option {
 }
 
 /* Deck view, edit mode: un-held tools show as outlines a mentor can tap. */
-.deck-chip {
-  position: relative;
-}
-
 .deck-chip.ghost {
   background: transparent;
   border-style: dashed;
