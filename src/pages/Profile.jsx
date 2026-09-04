@@ -133,6 +133,7 @@ export default function Profile() {
         </div>
       )}
 
+      <div className="profile-frame">
       {membership && (
         <div className="view-toggle">
           <button
@@ -312,6 +313,7 @@ export default function Profile() {
             </p>
           </div>
         )}
+      </div>
       </div>
     </>
   )

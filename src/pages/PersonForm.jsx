@@ -16,7 +16,6 @@ const blank = {
   phone: '',
   grade: "י'",
   gradeNum: 10,
-  nickname: '',
   isMentor: false,
 }
 
@@ -199,12 +198,6 @@ export default function PersonForm() {
               disabled={!teamIds.includes(store.teamId)}
               onChange={(e) => setFavorite(e.target.value)}
             />
-          </div>
-          <div>
-            <label className="f" htmlFor="nick">
-              כינוי
-            </label>
-            <input id="nick" value={form.nickname} onChange={(e) => set({ nickname: e.target.value })} />
           </div>
           <div>
             <label className="f" htmlFor="rankId">

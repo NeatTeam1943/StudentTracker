@@ -98,7 +98,22 @@ export default function Teams() {
 
   const allItems = order.flatMap((id) => categories[id]?.items ?? [])
 
+  /* Which rank already claims each item. The ladder is cumulative — anything
+     required at ניט is implicitly required for every rank above it — so an item
+     belongs to exactly one rank and can't be picked twice. */
+  const ownerOf = {}
+  for (const r of ranks) {
+    for (const item of requirement(team, ranks, r.id).items) {
+      if (!(item in ownerOf)) ownerOf[item] = r.id
+    }
+  }
+
+  const rankById = (id) => ranks.find((r) => r.id === id)
+  const unassigned = allItems.filter((i) => !(i in ownerOf)).length
+
   const toggleReq = (rankId, item) => {
+    const owner = ownerOf[item]
+    if (owner && owner !== rankId) return
     const current = requirement(team, ranks, rankId).items
     const next = current.includes(item) ? current.filter((t) => t !== item) : [...current, item]
     store.setRequirement(rankId, { items: next })
@@ -283,7 +298,9 @@ export default function Teams() {
       <div className="panel">
         <h3>סולם ההתקדמות ב{team.name}</h3>
         <p className="empty" style={{ marginTop: 0 }}>
-          סמנו מה כל דרגה דורשת. דרגה כוללת תמיד גם את כל הדרישות שלפניה.
+          סמנו מה כל דרגה דורשת. דרגה כוללת תמיד גם את כל הדרישות שלפניה, ולכן כל
+          פריט שייך לדרגה אחת בלבד. פריט שכבר משובץ מוצג מעומעם עם שם הדרגה שלו.
+          {unassigned > 0 ? ` נותרו ${unassigned} פריטים ללא שיבוץ.` : ' כל הפריטים משובצים.'}
         </p>
         {allItems.length === 0 && <p className="empty">הוסיפו קודם {team.itemNoun} בעמוד הניהול.</p>}
 
@@ -314,13 +331,18 @@ export default function Teams() {
                 <div className="tool-list" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(150px,100%),1fr))' }}>
                   {allItems.map((item) => {
                     const on = req.items.includes(item)
+                    const owner = ownerOf[item]
+                    const taken = owner && owner !== rank.id
                     return (
                       <button
                         key={item}
-                        className={`chip${on ? '' : ' ghost'}`}
+                        className={`chip${on ? '' : ' ghost'}${taken ? ' taken' : ''}`}
+                        disabled={taken}
+                        title={taken ? `כבר נדרש ב${rankById(owner)?.name}` : undefined}
                         onClick={() => toggleReq(rank.id, item)}
                       >
                         <span className="name">{item}</span>
+                        {taken && <span className="owner">{rankById(owner)?.name}</span>}
                       </button>
                     )
                   })}

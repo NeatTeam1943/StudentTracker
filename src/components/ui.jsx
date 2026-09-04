@@ -63,7 +63,10 @@ export function ToolColumns({ membership, categories, order, canEdit, onToggleHe
   const count = (id) => (categories[id].items ?? []).filter(held).length
 
   return (
-    <>
+    // A single wrapper, not a Fragment: .profile is a two-column grid, and two
+    // top-level children here become two separate grid items — which pushed the
+    // columns onto a second row inside the narrow card column.
+    <div className="tools-pane">
       {/* On a phone the five categories stack, so this is how you reach
           HEAVY MACHINERY without scrolling past thirty tools. */}
       {/* Buttons, not anchors. Under HashRouter the URL hash IS the route, so an
@@ -115,7 +118,7 @@ export function ToolColumns({ membership, categories, order, canEdit, onToggleHe
         )
       })}
       </div>
-    </>
+    </div>
   )
 }
 
@@ -154,13 +157,6 @@ export function IdCard({ person, rank, favoriteLabel = 'כלי אהוב', favori
           <span className="ico">🛠</span>
           <span className="lbl">{favoriteLabel}:</span>
           <span className="val">{favorite}</span>
-        </div>
-      )}
-      {person.nickname && (
-        <div className="field">
-          <span className="ico">🏷</span>
-          <span className="lbl">כינוי:</span>
-          <span className="val">"{person.nickname}"</span>
         </div>
       )}
     </aside>

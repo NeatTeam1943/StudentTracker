@@ -1,8 +1,28 @@
+import { useState } from 'react'
 import { useStore } from '../lib/store.jsx'
 
 export default function Mentors() {
   const store = useStore()
   const { user, isMentor, mentors, requests } = store
+  // A rejected write used to fail silently, so pressing אישור looked like
+  // nothing happening at all.
+  const [error, setError] = useState(null)
+  const [busy, setBusy] = useState(false)
+
+  const run = async (fn) => {
+    setBusy(true)
+    setError(null)
+    try {
+      await fn()
+    } catch (e) {
+      setError(
+        e?.code === 'permission-denied'
+          ? 'ההרשאות ב-Firestore חוסמות את הפעולה. יש לפרסם מחדש את firestore.rules — הכלל של mentors צריך להיות allow create, delete: if isMentor().'
+          : `הפעולה נכשלה: ${e?.message ?? e}`,
+      )
+    }
+    setBusy(false)
+  }
 
   const alreadyRequested = user && requests.some((r) => r.uid === user.uid)
 
@@ -43,6 +63,13 @@ export default function Mentors() {
         </div>
       )}
 
+      {error && (
+        <div className="panel" style={{ borderColor: '#ff6b5e' }}>
+          <h3 style={{ color: '#ff9d94' }}>הפעולה לא בוצעה</h3>
+          <p className="empty" style={{ marginBottom: 0 }}>{error}</p>
+        </div>
+      )}
+
       {isMentor && (
         <div className="panel">
           <h3>בקשות ממתינות {requests.length > 0 && `(${requests.length})`}</h3>
@@ -53,10 +80,14 @@ export default function Mentors() {
                 <strong>{r.name || r.email}</strong>
                 {r.name && r.email ? ` · ${r.email}` : ''}
               </span>
-              <button className="btn primary sm" onClick={() => store.approveMentor(r.uid, r.name || r.email)}>
+              <button
+                className="btn primary sm"
+                disabled={busy}
+                onClick={() => run(() => store.approveMentor(r.uid, r.name || r.email))}
+              >
                 אישור
               </button>
-              <button className="btn sm ghost" onClick={() => store.denyMentor(r.uid)}>
+              <button className="btn sm ghost" disabled={busy} onClick={() => run(() => store.denyMentor(r.uid))}>
                 דחייה
               </button>
             </div>
@@ -76,7 +107,8 @@ export default function Mentors() {
                 className="btn danger sm"
                 style={{ marginInlineStart: 'auto' }}
                 onClick={() =>
-                  confirm(`להסיר את ההרשאה של ${m.name || m.uid}?`) && store.revokeMentor(m.uid, m.name)
+                  confirm(`להסיר את ההרשאה של ${m.name || m.uid}?`) &&
+                  run(() => store.revokeMentor(m.uid, m.name))
                 }
               >
                 הסרה

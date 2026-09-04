@@ -14,23 +14,51 @@ import { badgeSrc, wordmarkSrc } from './ui.jsx'
 export const SLIDE_W = 1456
 export const SLIDE_H = 819
 
-// Column panels, left to right, as they sit on the slide.
-const COLUMN_X = [22.2, 206.5, 390.8, 575.2, 759.0]
-const COLUMN_W = 175
+/*
+ * Column geometry, measured off the deck: the strip runs from x=22.2 to x=934,
+ * five panels of 175 with 9.3 gaps. Rather than hard-coding those five slots,
+ * the same strip is divided by however many categories the team actually has —
+ * so five reproduces the deck exactly, and a sixth doesn't fall off the slide.
+ */
+const AREA_X = 22.2
+const AREA_W = 911.8
+const GAP = 9.3
+const MIN_COL = 118
 const COLUMN_Y = 109.3
 const COLUMN_H = 663.9
 const HEADER_Y = 127
-const HEADER_W = 148
 const HEADER_H = 36.1
-const CHIP_W = 156
 const CHIP_H = 40.3
 const CHIP_Y0 = 192.2
 const CHIP_STEP = 51.6
 
+function columnLayout(count) {
+  const n = Math.max(1, count)
+  let colW = (AREA_W - GAP * (n - 1)) / n
+  let extra = 0
+  if (colW < MIN_COL) {
+    // Too many categories to fit the deck's strip — widen the canvas instead of
+    // shrinking the columns into illegibility. Everything on the right is
+    // anchored to the right edge, so it all shifts along.
+    colW = MIN_COL
+    extra = colW * n + GAP * (n - 1) - AREA_W
+  }
+  return {
+    extra,
+    colW,
+    headerW: Math.max(60, colW - 27),
+    chipW: Math.max(70, colW - 19),
+    x: (i) => AREA_X + i * (colW + GAP),
+    // The deck sets 12px against a 175px column; keep the same ratio.
+    headerFont: Math.max(8, Math.min(12, (colW / 175) * 12)),
+    chipFont: Math.max(9, Math.min(15, (colW / 175) * 15)),
+  }
+}
+
 const CARD = { x: 982.5, y: 108.1, w: 431.6, h: 347.1 }
 const LOGBOX = { x: 1005.5, y: 479.5, w: 385.7, h: 301.7 }
 
-const FIELD_Y = { phone: 261.8, grade: 306.6, tool: 346.9, nick: 391.5 }
+const FIELD_Y = { phone: 261.8, grade: 306.6, tool: 346.9 }
 
 /**
  * Scale the fixed canvas into whatever room is actually available.
@@ -39,7 +67,7 @@ const FIELD_Y = { phone: 261.8, grade: 306.6, tool: 346.9, nick: 391.5 }
  * because the header is a different height on every phone once the nav wraps,
  * and 100vh lies on mobile browsers while the URL bar is showing.
  */
-function useFitScale(mode, zoom) {
+function useFitScale(mode, zoom, canvasW) {
   const ref = useRef(null)
   const [base, setBase] = useState(0.25)
 
@@ -51,7 +79,7 @@ function useFitScale(mode, zoom) {
       const vh = window.visualViewport?.height ?? window.innerHeight
       const avail = Math.max(220, vh - box.top - 12)
       const width = box.width || window.innerWidth
-      const b = mode === 'fill' ? avail / SLIDE_H : Math.min(width / SLIDE_W, avail / SLIDE_H)
+      const b = mode === 'fill' ? avail / SLIDE_H : Math.min(width / canvasW, avail / SLIDE_H)
       setBase(b)
       // Only claim the height the slide actually needs, so an unzoomed portrait
       // view doesn't leave a screenful of empty space under it.
@@ -69,7 +97,7 @@ function useFitScale(mode, zoom) {
       window.removeEventListener('orientationchange', measure)
       window.visualViewport?.removeEventListener('resize', measure)
     }
-  }, [mode, zoom])
+  }, [mode, zoom, canvasW])
 
   return { ref, scale: base * zoom }
 }
@@ -126,7 +154,9 @@ export default function DeckSlide({ person, membership, rank, categories, order,
   // Fitting a 1456px slide onto a phone makes the text tiny, so it can be
   // zoomed and dragged rather than only squinted at.
   const [zoom, setZoom] = useState(1)
-  const { ref, scale } = useFitScale(mode, zoom)
+  const L = columnLayout(order.length)
+  const canvasW = SLIDE_W + L.extra
+  const { ref, scale } = useFitScale(mode, zoom, canvasW)
 
   useEffect(() => setZoom(1), [mode])
 
@@ -148,18 +178,18 @@ export default function DeckSlide({ person, membership, rank, categories, order,
       >
       <div
         className="deck-canvas-box"
-        style={{ width: SLIDE_W * scale, height: SLIDE_H * scale }}
+        style={{ width: canvasW * scale, height: SLIDE_H * scale }}
       >
         <div
           className="deck-canvas"
-          style={{ width: SLIDE_W, height: SLIDE_H, transform: `scale(${scale})` }}
+          style={{ width: canvasW, height: SLIDE_H, transform: `scale(${scale})` }}
         >
           <img className="deck-logo" src={`${import.meta.env.BASE_URL}assets/logo.png`} alt="Neat Team" />
           <h1 className="deck-title">פרופיל הסמכות והרשאות</h1>
 
           {order.map((id, i) => {
             const cat = categories[id]
-            if (!cat || i >= COLUMN_X.length) return null
+            if (!cat) return null
             const held = (cat.items ?? []).filter((t) => membership?.items?.[t])
             return (
               // A Fragment, not a div: a wrapper element here becomes the
@@ -167,29 +197,24 @@ export default function DeckSlide({ person, membership, rank, categories, order,
               <Fragment key={id}>
                 <div
                   className="deck-col"
-                  style={{
-                    left: COLUMN_X[i],
-                    top: COLUMN_Y,
-                    width: COLUMN_W,
-                    height: COLUMN_H,
-                    '--tint': cat.tint,
-                  }}
+                  style={{ left: L.x(i), top: COLUMN_Y, width: L.colW, height: COLUMN_H, '--tint': cat.tint }}
                 />
                 <div
                   className="deck-col-head"
                   style={{
-                    left: COLUMN_X[i] + (COLUMN_W - HEADER_W) / 2,
+                    left: L.x(i) + (L.colW - L.headerW) / 2,
                     top: HEADER_Y,
-                    width: HEADER_W,
+                    width: L.headerW,
                     height: HEADER_H,
                     background: cat.header,
+                    fontSize: L.headerFont,
                   }}
                 >
                   {cat.label}
                 </div>
                 <div
                   className="deck-rule"
-                  style={{ left: COLUMN_X[i] + 8, top: HEADER_Y + HEADER_H + 14, width: COLUMN_W - 16 }}
+                  style={{ left: L.x(i) + 8, top: HEADER_Y + HEADER_H + 14, width: L.colW - 16 }}
                 />
                 {/* The deck shows only what someone holds — never the gaps. */}
                 {held.map((tool, n) => (
@@ -197,10 +222,11 @@ export default function DeckSlide({ person, membership, rank, categories, order,
                     key={tool}
                     className="deck-chip"
                     style={{
-                      left: COLUMN_X[i] + (COLUMN_W - CHIP_W) / 2,
+                      left: L.x(i) + (L.colW - L.chipW) / 2,
                       top: CHIP_Y0 + n * CHIP_STEP,
-                      width: CHIP_W,
+                      width: L.chipW,
                       height: CHIP_H,
+                      fontSize: L.chipFont,
                     }}
                   >
                     {membership.items[tool]?.canTeach && (
@@ -213,7 +239,7 @@ export default function DeckSlide({ person, membership, rank, categories, order,
             )
           })}
 
-          <div className="deck-card" style={{ left: CARD.x, top: CARD.y, width: CARD.w, height: CARD.h }} />
+          <div className="deck-card" style={{ top: CARD.y, width: CARD.w, height: CARD.h }} />
           {rank && (
             <>
               <img className="deck-wordmark" src={wordmarkSrc(rank.id)} alt="" />
@@ -236,11 +262,6 @@ export default function DeckSlide({ person, membership, rank, categories, order,
             <span className="lbl">{favoriteLabel}:</span>
             <span className="val">{favorite}</span>
           </div>
-          <div className="deck-field" style={{ top: FIELD_Y.nick }}>
-            <span className="lbl">כינוי:</span>
-            <span className="val">{person.nickname ? `"${person.nickname}"` : ''}</span>
-          </div>
-
           <LogPanel events={events} personId={person.id} ranks={ranks} />
         </div>
         </div>
