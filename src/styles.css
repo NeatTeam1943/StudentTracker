@@ -40,28 +40,23 @@ body {
   margin: 0;
   font-family: 'Heebo', 'Arial Hebrew', system-ui, sans-serif;
   color: var(--text);
-  background: #071528 url('/assets/bg.jpg') center / cover no-repeat;
-  background-attachment: fixed;
+  background: #071528;
   overscroll-behavior-y: none;
 }
 
-/* Mobile browsers stutter badly on fixed backgrounds and resize it on every
-   URL-bar show/hide. Pin it behind the content instead. */
-@media (max-width: 900px) {
-  body {
-    background-attachment: scroll;
-    background-position: center top;
-    background-size: 100% auto;
-  }
-}
-
+/* The artwork sits on its own fixed layer rather than on <body>. As a body
+   background it painted a single band at the top and left the rest of a
+   scrolled page flat navy, and background-attachment: fixed stutters badly
+   on mobile browsers. */
 body::before {
   content: '';
   position: fixed;
   inset: 0;
-  background: radial-gradient(120% 90% at 70% 10%, rgba(7, 21, 40, 0.15), rgba(4, 12, 24, 0.78));
+  z-index: -1;
+  background:
+    radial-gradient(120% 90% at 70% 10%, rgba(7, 21, 40, 0.15), rgba(4, 12, 24, 0.78)),
+    url('/assets/bg.jpg') center / cover no-repeat;
   pointer-events: none;
-  z-index: 0;
 }
 
 .shell {
@@ -151,6 +146,19 @@ button {
   color: #fff;
   border-color: var(--panel-line);
   background: rgba(186, 70, 9, 0.22);
+}
+
+.teams-bar {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  margin: 0 0 12px;
+  padding-bottom: 2px;
+}
+
+.teams-bar::-webkit-scrollbar {
+  display: none;
 }
 
 .team-pill {

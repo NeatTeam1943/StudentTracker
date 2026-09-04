@@ -1,4 +1,5 @@
-import { HashRouter, Routes, Route, NavLink, Link } from 'react-router-dom'
+import { useEffect } from 'react'
+import { HashRouter, Routes, Route, NavLink, Link, useLocation } from 'react-router-dom'
 import { StoreProvider, useStore } from './lib/store.jsx'
 import Roster from './pages/Roster.jsx'
 import Profile from './pages/Profile.jsx'
@@ -20,16 +21,6 @@ function TopBar() {
       </Link>
 
       <nav className="nav">
-        {store.teams?.length > 1 &&
-          store.teams.map((t) => (
-            <button
-              key={t.id}
-              className={`team-pill${t.id === store.teamId ? ' on' : ''}`}
-              onClick={() => store.setTeam(t.id)}
-            >
-              {t.name}
-            </button>
-          ))}
         <NavLink to="/" className={cls} end>
           חברי הצוות
         </NavLink>
@@ -82,11 +73,42 @@ function TopBar() {
   )
 }
 
+function TeamBar() {
+  const store = useStore()
+  if (!(store.teams?.length > 1)) return null
+  return (
+    <div className="teams-bar">
+      {store.teams.map((t) => (
+        <button
+          key={t.id}
+          className={`team-pill${t.id === store.teamId ? ' on' : ''}`}
+          onClick={() => store.setTeam(t.id)}
+        >
+          {t.name}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+/* Switching team or page keeps the browser's scroll position, which on a phone
+   drops you into blank space far below a shorter page. */
+function ScrollToTop() {
+  const { pathname } = useLocation()
+  const store = useStore()
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [pathname, store.teamId])
+  return null
+}
+
 function Shell() {
   const store = useStore()
   return (
     <div className="shell">
       <TopBar />
+      <TeamBar />
+      <ScrollToTop />
       {store.error && (
         <div className="panel">
           <h3>לא ניתן לטעון את הנתונים</h3>
