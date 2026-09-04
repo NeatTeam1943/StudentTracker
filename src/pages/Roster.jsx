@@ -15,9 +15,8 @@ export default function Roster() {
   const store = useStore()
   const { team, ranks, isMentor } = store
   const [importing, setImporting] = useState(false)
-  const [showArchived, setShowArchived] = useState(false)
+  const [showArchive, setShowArchive] = useState(false)
   const [migrating, setMigrating] = useState(false)
-  const [showAlumni, setShowAlumni] = useState(false)
 
   if (store.loading) return <p className="empty">טוען…</p>
 
@@ -87,8 +86,8 @@ export default function Roster() {
     )
 
   const active = store.roster.filter((p) => !p.archived)
-  const archived = store.roster.filter((p) => p.archived)
-  const alumni = store.alumni
+  // Archived outright, or still on record here but no longer active.
+  const archive = [...store.roster.filter((p) => p.archived), ...store.alumni]
 
   const suggestions = isMentor
     ? active.map((p) => [p, promotionSuggestion(team, ranks, p)]).filter(([, s]) => s)
@@ -154,41 +153,27 @@ export default function Roster() {
         )
       })}
 
-      {alumni.length > 0 && (
+      {/* One archive per team view: people who moved to another team and people
+          archived outright. Both mean the same thing to a mentor — kept for the
+          record, not active here. */}
+      {archive.length > 0 && (
         <section>
           <div className="group-head">
-            <h2>עברו לצוות אחר</h2>
-            <span>{alumni.length}</span>
-            <button className="btn sm ghost" onClick={() => setShowAlumni((v) => !v)}>
-              {showAlumni ? 'הסתרה' : 'הצגה'}
+            <h2>ארכיון</h2>
+            <span>{archive.length}</span>
+            <button className="btn sm ghost" onClick={() => setShowArchive((v) => !v)}>
+              {showArchive ? 'הסתרה' : 'הצגה'}
             </button>
           </div>
-          {showAlumni && (
+          {showArchive && (
             <>
               <p className="empty" style={{ marginTop: 0 }}>
                 ההסמכות והדרגה שלהם כאן נשמרו, והם עדיין יכולים ללמד את מה שהוסמכו ללמד.
               </p>
               <div className="roster">
-                {alumni.sort((a, b) => a.name.localeCompare(b.name, 'he')).map(card)}
+                {archive.sort((a, b) => a.name.localeCompare(b.name, 'he')).map(card)}
               </div>
             </>
-          )}
-        </section>
-      )}
-
-      {isMentor && archived.length > 0 && (
-        <section>
-          <div className="group-head">
-            <h2>ארכיון</h2>
-            <span>{archived.length}</span>
-            <button className="btn sm ghost" onClick={() => setShowArchived((v) => !v)}>
-              {showArchived ? 'הסתרה' : 'הצגה'}
-            </button>
-          </div>
-          {showArchived && (
-            <div className="roster">
-              {archived.sort((a, b) => a.name.localeCompare(b.name, 'he')).map(card)}
-            </div>
           )}
         </section>
       )}
