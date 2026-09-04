@@ -352,6 +352,26 @@ export default function Teams() {
           })}
       </div>
 
+      {store.orphans.length > 0 && (
+        <div className="panel" style={{ borderColor: '#ffb020' }}>
+          <h3>הסמכות לפריטים שנמחקו</h3>
+          <p className="empty" style={{ marginTop: 0 }}>
+            {store.orphans.length} חברי צוות מחזיקים הסמכות לפריטים שכבר לא קיימים
+            ב{team.name}. הן לא מוצגות בשום מקום אבל נספרות. הניקוי מסיר אותן ומעדכן דרגות.
+          </p>
+          <ul style={{ fontSize: 14, margin: '0 0 12px' }}>
+            {store.orphans.map(([p, gone]) => (
+              <li key={p.id}>
+                {p.name}: {gone.join(', ')}
+              </li>
+            ))}
+          </ul>
+          <button className="btn primary" onClick={() => store.cleanupOrphans()}>
+            ניקוי
+          </button>
+        </div>
+      )}
+
       {teams.length > 1 && (
         <div className="panel">
           <h3>מחיקת צוות</h3>

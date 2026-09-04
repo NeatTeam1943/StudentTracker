@@ -95,3 +95,18 @@ export function nextRankProgress(team, ranks, person) {
 /** The "favourite" line: per-team value, falling back to the pre-teams field. */
 export const favoriteOf = (person, teamId) =>
   membershipIn(person, teamId)?.favorite ?? person?.favoriteTool ?? ''
+
+/** Every item currently in the team's catalog. */
+export const catalogItems = (team) =>
+  new Set((team?.order ?? []).flatMap((id) => team?.categories?.[id]?.items ?? []))
+
+/**
+ * Certifications that still correspond to a real item. A tool deleted while
+ * people held it used to leave the entry behind, so counts stayed too high and
+ * pointed at something no longer visible anywhere.
+ */
+export function heldItems(person, team) {
+  const valid = catalogItems(team)
+  const items = membershipIn(person, team?.id)?.items ?? {}
+  return Object.entries(items).filter(([name]) => valid.has(name))
+}

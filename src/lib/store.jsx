@@ -18,7 +18,7 @@ import {
 import { signInWithPopup, signOut as fbSignOut, onAuthStateChanged } from 'firebase/auth'
 import { db, auth, googleProvider } from './firebase.js'
 import { CATEGORIES, CATEGORY_ORDER, RANKS, BUILD_REQUIREMENTS, SEED_PEOPLE } from '../data/seed.js'
-import { earnedRank } from './ranks.js'
+import { earnedRank, catalogItems } from './ranks.js'
 
 /*
  * Every read and write in the app goes through this module.
@@ -312,6 +312,35 @@ export function StoreProvider({ children }) {
       /* A mentor's own note about someone. It lands in the same append-only log
          as everything else, so it can't later be edited or quietly removed —
          a wrong note is corrected by writing another one. */
+      /* Certifications left behind by a tool or category deleted before that
+         bug was fixed. They're invisible everywhere but still inflate counts. */
+      orphans: (() => {
+        const valid = catalogItems(team)
+        return list
+          .map((p) => [p, Object.keys(p.memberships?.[team.id]?.items ?? {}).filter((t) => !valid.has(t))])
+          .filter(([, gone]) => gone.length)
+      })(),
+
+      async cleanupOrphans() {
+        const valid = catalogItems(team)
+        let removed = 0
+        for (const p of list) {
+          const m = p.memberships?.[team.id]
+          if (!m?.items) continue
+          const gone = Object.keys(m.items).filter((t) => !valid.has(t))
+          if (!gone.length) continue
+          for (const t of gone) {
+            await updateDoc(personRef(p.id), new FieldPath('memberships', team.id, 'items', t), deleteField())
+            removed++
+          }
+          const items = { ...m.items }
+          for (const t of gone) delete items[t]
+          await this.syncRankWith(p.id, { ...m, items })
+        }
+        if (removed) await log({ type: 'orphans_cleaned', count: removed, teamId: team.id })
+        return removed
+      },
+
       addNote(personId, text) {
         const body = text.trim()
         if (!body) return Promise.resolve()

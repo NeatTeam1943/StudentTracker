@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useStore } from '../lib/store.jsx'
 import { PersonCard } from '../components/ui.jsx'
-import { displayRank, promotionSuggestion, membershipIn } from '../lib/ranks.js'
+import { displayRank, promotionSuggestion, membershipIn, catalogItems } from '../lib/ranks.js'
 
 const GROUPS = [
   { key: 10, title: "שכבה י'" },
@@ -96,8 +96,15 @@ export default function Roster() {
         .filter(([, s]) => s)
     : []
 
+  const valid = catalogItems(team)
   const card = (p) => (
-    <PersonCard key={p.id} person={p} rank={displayRank(ranks, p, team.id)} membership={membershipIn(p, team.id)} />
+    <PersonCard
+      key={p.id}
+      person={p}
+      rank={displayRank(ranks, p, team.id)}
+      membership={membershipIn(p, team.id)}
+      validItems={valid}
+    />
   )
 
   return (

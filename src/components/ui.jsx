@@ -169,9 +169,12 @@ export function IdCard({ person, rank, favoriteLabel = 'כלי אהוב', favori
   )
 }
 
-export function PersonCard({ person, rank, membership }) {
-  const items = membership?.items ?? {}
-  const teaches = Object.values(items).filter((t) => t?.canTeach).length
+export function PersonCard({ person, rank, membership, validItems }) {
+  // Ignore entries for items that no longer exist in the catalog.
+  const items = Object.entries(membership?.items ?? {}).filter(
+    ([name]) => !validItems || validItems.has(name),
+  )
+  const teaches = items.filter(([, t]) => t?.canTeach).length
   return (
     <Link to={`/p/${person.id}`} className="card">
       <RankBadge rank={rank} size={58} />
@@ -183,7 +186,7 @@ export function PersonCard({ person, rank, membership }) {
           </div>
         )}
         <div className="meta">
-          {person.role} · {Object.keys(items).length} הסמכות
+          {person.role} · {items.length} הסמכות
         </div>
       </div>
       {teaches > 0 && <span className="flag">מלמד {teaches}</span>}
