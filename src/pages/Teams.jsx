@@ -39,10 +39,26 @@ export default function Teams() {
       </div>
     )
 
+  // Never write on blur unless the text actually changed — a stray focus
+  // shouldn't produce a log entry, let alone overwrite a name.
+  const renameField = (e, field, current) => {
+    const v = e.target.value.trim()
+    if (!v || v === current) {
+      e.target.value = current
+      return
+    }
+    store.updateTeam(team.id, { [field]: v })
+  }
+
   const createTeam = (e) => {
     e.preventDefault()
     if (!draft.name.trim()) return
-    const id = slug(draft.name)
+    let id = slug(draft.name)
+    if (teams.some((t) => t.id === id)) {
+      let n = 2
+      while (teams.some((t) => t.id === `${id}-${n}`)) n++
+      id = `${id}-${n}`
+    }
     store.createTeam(id, draft.name.trim(), draft.itemNoun.trim(), draft.itemNounSingular.trim())
     store.setTeam(id)
     setDraft({ name: '', itemNoun: 'הכשרות', itemNounSingular: 'הכשרה' })
@@ -133,28 +149,24 @@ export default function Teams() {
         </p>
       </div>
 
-      <div className="panel">
+      {/* Keyed on team.id so the fields remount when the active team changes.
+          Without the key React reuses the same inputs, defaultValue keeps the
+          previous team's text, and the next blur writes that name onto the new
+          team. */}
+      <div className="panel" key={team.id}>
         <h3>{team.name} — הגדרות</h3>
         <div className="form-grid">
           <div>
             <label className="f" htmlFor="rename">
               שם
             </label>
-            <input
-              id="rename"
-              defaultValue={team.name}
-              onBlur={(e) => e.target.value.trim() && store.updateTeam(team.id, { name: e.target.value.trim() })}
-            />
+            <input id="rename" defaultValue={team.name} onBlur={(e) => renameField(e, 'name', team.name)} />
           </div>
           <div>
             <label className="f" htmlFor="rnoun">
               פריטים (רבים)
             </label>
-            <input
-              id="rnoun"
-              defaultValue={team.itemNoun}
-              onBlur={(e) => e.target.value.trim() && store.updateTeam(team.id, { itemNoun: e.target.value.trim() })}
-            />
+            <input id="rnoun" defaultValue={team.itemNoun} onBlur={(e) => renameField(e, 'itemNoun', team.itemNoun)} />
           </div>
           <div>
             <label className="f" htmlFor="rnoun1">
@@ -163,9 +175,7 @@ export default function Teams() {
             <input
               id="rnoun1"
               defaultValue={team.itemNounSingular}
-              onBlur={(e) =>
-                e.target.value.trim() && store.updateTeam(team.id, { itemNounSingular: e.target.value.trim() })
-              }
+              onBlur={(e) => renameField(e, 'itemNounSingular', team.itemNounSingular)}
             />
           </div>
         </div>
@@ -178,11 +188,14 @@ export default function Teams() {
           <div className="log-row" key={id}>
             <span className="dot" style={{ background: categories[id].header }} />
             <input
+              key={`${team.id}-${id}`}
               defaultValue={categories[id].he}
               style={{ maxWidth: 200 }}
-              onBlur={(e) =>
-                e.target.value.trim() && store.updateCategory(id, { he: e.target.value.trim(), label: e.target.value.trim() })
-              }
+              onBlur={(e) => {
+                const v = e.target.value.trim()
+                if (!v || v === categories[id].he) return (e.target.value = categories[id].he)
+                store.updateCategory(id, { he: v, label: v })
+              }}
             />
             <span className="who">{(categories[id].items ?? []).length}</span>
             <button className="btn sm ghost" disabled={i === 0} onClick={() => store.moveCategory(id, -1)}>
