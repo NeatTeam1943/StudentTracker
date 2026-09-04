@@ -119,7 +119,7 @@ export function ToolColumns({ membership, categories, order, canEdit, onToggleHe
   )
 }
 
-export function IdCard({ person, rank }) {
+export function IdCard({ person, rank, favoriteLabel = 'כלי אהוב', favorite }) {
   return (
     <aside className="id-card">
       <div className="card-top">
@@ -149,11 +149,11 @@ export function IdCard({ person, rank }) {
         <span className="lbl">שכבה:</span>
         <span className="val">{person.grade}</span>
       </div>
-      {person.favoriteTool && (
+      {favorite && (
         <div className="field">
           <span className="ico">🛠</span>
-          <span className="lbl">כלי אהוב:</span>
-          <span className="val">{person.favoriteTool}</span>
+          <span className="lbl">{favoriteLabel}:</span>
+          <span className="val">{favorite}</span>
         </div>
       )}
       {person.nickname && (

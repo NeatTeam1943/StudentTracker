@@ -35,7 +35,12 @@ const slug = (s) =>
 export default function Teams() {
   const store = useStore()
   const { teams, team, ranks, categories, order, isMentor } = store
-  const [draft, setDraft] = useState({ name: '', itemNoun: 'הכשרות', itemNounSingular: 'הכשרה' })
+  const [draft, setDraft] = useState({
+    name: '',
+    itemNoun: 'הכשרות',
+    itemNounSingular: 'הכשרה',
+    favoriteLabel: 'כלי אהוב',
+  })
   const [cat, setCat] = useState('')
 
   if (store.loading) return <p className="empty">טוען…</p>
@@ -68,9 +73,15 @@ export default function Teams() {
       while (teams.some((t) => t.id === `${id}-${n}`)) n++
       id = `${id}-${n}`
     }
-    store.createTeam(id, draft.name.trim(), draft.itemNoun.trim(), draft.itemNounSingular.trim())
+    store.createTeam(
+      id,
+      draft.name.trim(),
+      draft.itemNoun.trim(),
+      draft.itemNounSingular.trim(),
+      draft.favoriteLabel.trim() || 'כלי אהוב',
+    )
     store.setTeam(id)
-    setDraft({ name: '', itemNoun: 'הכשרות', itemNounSingular: 'הכשרה' })
+    setDraft({ name: '', itemNoun: 'הכשרות', itemNounSingular: 'הכשרה', favoriteLabel: 'כלי אהוב' })
   }
 
   const addCategory = (e) => {
@@ -149,6 +160,17 @@ export default function Teams() {
               onChange={(e) => setDraft({ ...draft, itemNounSingular: e.target.value })}
             />
           </div>
+          <div>
+            <label className="f" htmlFor="fav">
+              שורת ה"אהוב" בכרטיס
+            </label>
+            <input
+              id="fav"
+              value={draft.favoriteLabel}
+              onChange={(e) => setDraft({ ...draft, favoriteLabel: e.target.value })}
+              placeholder="שפה אהובה"
+            />
+          </div>
           <div style={{ display: 'flex', alignItems: 'flex-end' }}>
             <button className="btn primary">יצירה</button>
           </div>
@@ -185,6 +207,16 @@ export default function Teams() {
               id="rnoun1"
               defaultValue={team.itemNounSingular}
               onBlur={(e) => renameField(e, 'itemNounSingular', team.itemNounSingular)}
+            />
+          </div>
+          <div>
+            <label className="f" htmlFor="rfav">
+              שורת ה"אהוב" בכרטיס
+            </label>
+            <input
+              id="rfav"
+              defaultValue={team.favoriteLabel ?? 'כלי אהוב'}
+              onBlur={(e) => renameField(e, 'favoriteLabel', team.favoriteLabel ?? 'כלי אהוב')}
             />
           </div>
         </div>

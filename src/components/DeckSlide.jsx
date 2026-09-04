@@ -122,7 +122,7 @@ function LogPanel({ events, personId, ranks }) {
   )
 }
 
-export default function DeckSlide({ person, membership, rank, categories, order, mode, events, ranks }) {
+export default function DeckSlide({ person, membership, rank, categories, order, mode, events, ranks, favoriteLabel = 'כלי אהוב', favorite }) {
   // Fitting a 1456px slide onto a phone makes the text tiny, so it can be
   // zoomed and dragged rather than only squinted at.
   const [zoom, setZoom] = useState(1)
@@ -233,8 +233,8 @@ export default function DeckSlide({ person, membership, rank, categories, order,
             <span className="val">{person.grade}</span>
           </div>
           <div className="deck-field" style={{ top: FIELD_Y.tool }}>
-            <span className="lbl">כלי אהוב:</span>
-            <span className="val">{person.favoriteTool}</span>
+            <span className="lbl">{favoriteLabel}:</span>
+            <span className="val">{favorite}</span>
           </div>
           <div className="deck-field" style={{ top: FIELD_Y.nick }}>
             <span className="lbl">כינוי:</span>

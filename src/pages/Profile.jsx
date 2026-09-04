@@ -3,7 +3,7 @@ import { Link, useParams } from 'react-router-dom'
 import { useStore } from '../lib/store.jsx'
 import { IdCard, ToolColumns, RankBadge } from '../components/ui.jsx'
 import DeckSlide, { useLandscape } from '../components/DeckSlide.jsx'
-import { displayRank, promotionSuggestion, nextRankProgress, membershipIn } from '../lib/ranks.js'
+import { displayRank, promotionSuggestion, nextRankProgress, membershipIn, favoriteOf } from '../lib/ranks.js'
 
 export default function Profile() {
   const { id } = useParams()
@@ -160,13 +160,22 @@ export default function Profile() {
           order={store.order}
           events={store.events}
           ranks={ranks}
+          favoriteLabel={team.favoriteLabel ?? 'כלי אהוב'}
+          favorite={favoriteOf(person, team.id)}
           mode={landscape && window.innerHeight < 600 ? 'fill' : 'fit'}
         />
       )}
 
       <div className="profile">
         <div>
-          {view !== 'deck' && <IdCard person={person} rank={rank} />}
+          {view !== 'deck' && (
+            <IdCard
+              person={person}
+              rank={rank}
+              favoriteLabel={team.favoriteLabel ?? 'כלי אהוב'}
+              favorite={favoriteOf(person, team.id)}
+            />
+          )}
 
           {progress && view !== 'deck' && (
             <div className="panel" style={{ marginTop: 14 }}>

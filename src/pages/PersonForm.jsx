@@ -16,7 +16,6 @@ const blank = {
   phone: '',
   grade: "י'",
   gradeNum: 10,
-  favoriteTool: '',
   nickname: '',
   isMentor: false,
 }
@@ -38,6 +37,11 @@ export default function PersonForm() {
     existing ? Object.keys(existing.memberships ?? {}) : [store.teamId],
   )
   const [rankId, setRankId] = useState(() => existing?.memberships?.[store.teamId]?.rankId ?? '')
+  // The "favourite" line means something different on each team, so its value
+  // lives in the membership rather than on the person.
+  const [favorite, setFavorite] = useState(
+    () => existing?.memberships?.[store.teamId]?.favorite ?? existing?.favoriteTool ?? '',
+  )
   const [busy, setBusy] = useState(false)
 
   if (!store.isMentor)
@@ -79,7 +83,10 @@ export default function PersonForm() {
     for (const t of Object.keys(memberships)) {
       if (!teamIds.includes(t)) memberships[t] = { ...memberships[t], active: false }
     }
-    if (memberships[store.teamId]) memberships[store.teamId].rankId = rankId || null
+    if (memberships[store.teamId]) {
+      memberships[store.teamId].rankId = rankId || null
+      memberships[store.teamId].favorite = favorite
+    }
 
     await store.savePerson({ ...form, id: personId, memberships })
     navigate(`/p/${personId}`)
@@ -184,9 +191,14 @@ export default function PersonForm() {
           )}
           <div>
             <label className="f" htmlFor="fav">
-              כלי אהוב
+              {store.team.favoriteLabel ?? 'כלי אהוב'} ({store.team.name})
             </label>
-            <input id="fav" value={form.favoriteTool} onChange={(e) => set({ favoriteTool: e.target.value })} />
+            <input
+              id="fav"
+              value={favorite}
+              disabled={!teamIds.includes(store.teamId)}
+              onChange={(e) => setFavorite(e.target.value)}
+            />
           </div>
           <div>
             <label className="f" htmlFor="nick">

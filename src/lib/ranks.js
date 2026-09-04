@@ -91,3 +91,7 @@ export function nextRankProgress(team, ranks, person) {
   const required = cumulativeItems(team, ranks, next.id)
   return { next, missingItems, gradeOk, have: required.length - missingItems.length, total: required.length }
 }
+
+/** The "favourite" line: per-team value, falling back to the pre-teams field. */
+export const favoriteOf = (person, teamId) =>
+  membershipIn(person, teamId)?.favorite ?? person?.favoriteTool ?? ''

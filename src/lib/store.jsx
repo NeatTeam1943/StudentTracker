@@ -47,6 +47,7 @@ export const BUILD_TEAM = {
   name: 'בנייה',
   itemNoun: 'כלים',
   itemNounSingular: 'כלי',
+  favoriteLabel: 'כלי אהוב',
   sort: 0,
   categories: CATEGORIES,
   order: CATEGORY_ORDER,
@@ -396,10 +397,19 @@ export function StoreProvider({ children }) {
 
       // --- teams ------------------------------------------------------------
 
-      createTeam: (id, name, itemNoun, itemNounSingular) =>
+      createTeam: (id, name, itemNoun, itemNounSingular, favoriteLabel) =>
         saveTeam(
           id,
-          { name, itemNoun, itemNounSingular, sort: teamList.length, categories: {}, order: [], requirements: {} },
+          {
+            name,
+            itemNoun,
+            itemNounSingular,
+            favoriteLabel,
+            sort: teamList.length,
+            categories: {},
+            order: [],
+            requirements: {},
+          },
           { type: 'team_created', name },
         ),
 
@@ -526,7 +536,9 @@ export function StoreProvider({ children }) {
           )
           await setDoc(doc(db, 'people', id), {
             ...rest,
-            memberships: { build: { rankId, items, active: true, joinedAt: at } },
+            memberships: {
+              build: { rankId, items, active: true, joinedAt: at, favorite: rest.favoriteTool ?? '' },
+            },
           })
         }
         await log({ type: 'deck_imported', count: SEED_PEOPLE.length })
