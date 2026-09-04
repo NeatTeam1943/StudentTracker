@@ -309,6 +309,15 @@ export function StoreProvider({ children }) {
 
       // --- people -----------------------------------------------------------
 
+      /* A mentor's own note about someone. It lands in the same append-only log
+         as everything else, so it can't later be edited or quietly removed —
+         a wrong note is corrected by writing another one. */
+      addNote(personId, text) {
+        const body = text.trim()
+        if (!body) return Promise.resolve()
+        return log({ type: 'note', personId, text: body, teamId: team.id })
+      },
+
       async savePerson(person) {
         const exists = list.some((p) => p.id === person.id)
         const { id, ...rest } = person

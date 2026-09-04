@@ -22,6 +22,7 @@ export default function Profile() {
   })
   const [userChose, setUserChose] = useState(false)
   const [deckEdit, setDeckEdit] = useState(false)
+  const [note, setNote] = useState('')
 
   useEffect(() => {
     if (!userChose) setView(landscape ? 'deck' : (localStorage.getItem('neat-tools:view') || 'deck'))
@@ -187,6 +188,7 @@ export default function Profile() {
             has ? store.revokeTool(person.id, tool) : store.grantTool(person.id, tool)
           }
           onToggleTeach={(tool, value) => store.setCanTeach(person.id, tool, value)}
+          onNote={(text) => store.addNote(person.id, text)}
         />
       )}
 
@@ -320,6 +322,27 @@ export default function Profile() {
                   צירוף ל{team.name}
                 </button>
               )}
+
+              <label className="f" style={{ marginTop: 14 }} htmlFor="note">
+                הערה ליומן
+              </label>
+              <form
+                className="note-form"
+                onSubmit={(e) => {
+                  e.preventDefault()
+                  store.addNote(person.id, note).then(() => setNote(''))
+                }}
+              >
+                <input
+                  id="note"
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                  placeholder="מה קרה, מה לזכור…"
+                />
+                <button className="btn primary" disabled={!note.trim()}>
+                  הוספה
+                </button>
+              </form>
 
               <p style={{ display: 'flex', gap: 8, marginTop: 14, marginBottom: 0, flexWrap: 'wrap' }}>
                 <Link className="btn sm" to={`/edit/${person.id}`}>

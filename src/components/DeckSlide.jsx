@@ -1,6 +1,7 @@
 import { Fragment, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { badgeSrc, wordmarkSrc } from './ui.jsx'
+import { describeEvent } from '../lib/events.js'
 
 /*
  * The profile exactly as the source deck draws it.
@@ -110,39 +111,13 @@ function useFitScale(mode, zoom, canvasW) {
   return { ref, scale: base * zoom }
 }
 
-function LogPanel({ events, personId, ranks }) {
-  const rows = events.filter((e) => e.personId === personId).slice(0, 8)
+function LogPanel({ events, personId, ranks, canNote, onNote }) {
+  const [note, setNote] = useState('')
+  const rows = events.filter((e) => e.personId === personId).slice(0, canNote ? 6 : 8)
   const rankName = (id) => ranks.find((r) => r.id === id)?.name ?? '—'
 
-  const line = (e) => {
-    switch (e.type) {
-      case 'tool_granted':
-        return `הוסמך ל${e.tool}`
-      case 'tool_revoked':
-        return `בוטלה ההסמכה ל${e.tool}`
-      case 'teach_granted':
-        return `הוסמך ללמד ${e.tool}`
-      case 'teach_revoked':
-        return `הפסיק ללמד ${e.tool}`
-      case 'promoted':
-        return `קודם ל${rankName(e.to)}`
-      case 'rank_set':
-        return `דרגה נקבעה ל${rankName(e.to)}`
-      case 'team_joined':
-        return 'צורף לצוות'
-      case 'team_transferred':
-        return 'הועבר לצוות אחר'
-      case 'person_added':
-        return 'נוסף לצוות'
-      case 'person_updated':
-        return 'עודכנו הפרטים'
-      default:
-        return e.type
-    }
-  }
-
   return (
-    <div className="deck-log" style={{ left: LOGBOX.x, top: LOGBOX.y, width: LOGBOX.w, height: LOGBOX.h }}>
+    <div className="deck-log" style={{ top: LOGBOX.y, width: LOGBOX.w, height: LOGBOX.h }}>
       <div className="deck-log-head">
         <span>יומן</span>
         <Link to={`/logs?person=${personId}`}>הכל ←</Link>
@@ -151,9 +126,25 @@ function LogPanel({ events, personId, ranks }) {
       {rows.map((e) => (
         <div className="deck-log-row" key={e.id}>
           <time>{e.at?.toDate ? e.at.toDate().toLocaleDateString('he-IL') : '…'}</time>
-          <span>{line(e)}</span>
+          {/* Name is omitted — the whole card is already about this person. */}
+          <span>{describeEvent(e, () => '', rankName)}</span>
         </div>
       ))}
+      {canNote && (
+        <form
+          className="deck-note-form"
+          onSubmit={(e) => {
+            e.preventDefault()
+            onNote?.(note)
+            setNote('')
+          }}
+        >
+          <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="הערה…" />
+          <button className="btn sm primary" disabled={!note.trim()}>
+            הוספה
+          </button>
+        </form>
+      )}
     </div>
   )
 }
@@ -172,6 +163,7 @@ export default function DeckSlide({
   canEdit = false,
   onToggleHeld,
   onToggleTeach,
+  onNote,
 }) {
   // Fitting a 1456px slide onto a phone makes the text tiny, so it can be
   // zoomed and dragged rather than only squinted at.
@@ -263,6 +255,7 @@ export default function DeckSlide({
                         <button
                           type="button"
                           className={`deck-teach-btn ${has.canTeach ? 'on' : 'off'}`}
+                          style={{ height: rows.h - 6 }}
                           disabled={!canEdit}
                           onClick={(e) => {
                             e.stopPropagation()
@@ -304,7 +297,13 @@ export default function DeckSlide({
             <span className="lbl">{favoriteLabel}:</span>
             <span className="val">{favorite}</span>
           </div>
-          <LogPanel events={events} personId={person.id} ranks={ranks} />
+          <LogPanel
+            events={events}
+            personId={person.id}
+            ranks={ranks}
+            canNote={canEdit}
+            onNote={onNote}
+          />
         </div>
         </div>
       </div>

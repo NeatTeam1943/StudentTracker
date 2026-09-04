@@ -451,6 +451,8 @@ button {
   text-align: center;
   overflow-wrap: anywhere;
   line-height: 1.15;
+  /* Balances the teach slot on the left so the text stays optically centred. */
+  padding-inline-start: 2px;
 }
 
 .chip .teach {
@@ -476,6 +478,18 @@ button {
   background: rgba(0, 255, 200, 0.12);
   border-color: var(--chip);
   color: #fff;
+}
+
+.chip .teach-btn {
+  order: 2;
+}
+
+.chip .drop-btn {
+  order: 0;
+}
+
+.chip .name {
+  order: 1;
 }
 
 .chip .teach-btn,
@@ -1077,8 +1091,7 @@ select option {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 4px;
-  padding: 0 6px;
+  padding: 0 34px 0 6px;
   text-align: center;
   line-height: 1.05;
 }
@@ -1282,6 +1295,10 @@ select option {
 }
 
 /* Deck view, edit mode: un-held tools show as outlines a mentor can tap. */
+.deck-chip {
+  position: relative;
+}
+
 .deck-chip.ghost {
   background: transparent;
   border-style: dashed;
@@ -1304,7 +1321,13 @@ select option {
   color: #fff;
 }
 
+/* Pinned to the chip's left edge — the deck insets it 6px and centres it
+   vertically, regardless of how long the tool name is. */
 .deck-teach-btn {
+  position: absolute;
+  left: 6px;
+  top: 50%;
+  transform: translateY(-50%);
   border: 0;
   padding: 0;
   background: rgba(0, 0, 0, 0.1);
@@ -1312,9 +1335,7 @@ select option {
   line-height: 0;
   display: grid;
   place-items: center;
-  width: 26px;
-  height: 26px;
-  flex: 0 0 26px;
+  width: 28px;
 }
 
 .deck-teach-btn.on {
@@ -1327,4 +1348,43 @@ select option {
 
 .deck-teach-btn.off {
   opacity: 0.4;
+}
+
+/* A mentor's written note, distinct from the automatic entries around it. */
+.dot.note {
+  background: #ffb020;
+}
+
+.log-row.is-note span {
+  font-weight: 600;
+}
+
+.note-form {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.note-form input {
+  flex: 1 1 220px;
+}
+
+.deck-note-form {
+  display: flex;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.deck-note-form input {
+  flex: 1 1 auto;
+  font-size: 13px;
+  padding: 3px 7px;
+  min-height: 0;
+}
+
+.deck-note-form button {
+  flex: 0 0 auto;
+  font-size: 13px;
+  padding: 3px 10px;
 }

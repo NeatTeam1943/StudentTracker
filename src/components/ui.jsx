@@ -28,32 +28,38 @@ export function ToolChip({ tool, held, canEdit, onToggleHeld, onToggleTeach }) {
   const canTeach = held.canTeach
   const when = held.at ? new Date(held.at).toLocaleDateString('he-IL') : null
 
+  /*
+   * Fixed slots, not inline elements. The teaching icon used to sit next to the
+   * text, so its position moved with the length of every tool name; and when a
+   * chip had no icon the slot collapsed and the text shifted. Both slots are now
+   * always reserved: revoke on the right, teach pinned to the left edge — where
+   * the source deck puts it, 6px in and vertically centred.
+   */
   return (
     <div className={`chip${canEdit ? ' editable' : ''}`} title={when ? `הוסמך ${when}` : tool}>
-      {(canTeach || canEdit) && (
-        <button
-          type="button"
-          className={`teach-btn ${canTeach ? 'on' : 'off'}`}
-          disabled={!canEdit}
-          onClick={onToggleTeach}
-          aria-pressed={canTeach}
-          aria-label={`${tool} — מלמד אחרים`}
-        >
-          <img className="teach" src={teachIcon} alt="" />
-        </button>
-      )}
-      <span className="name">{tool}</span>
       {canEdit && (
         <button
           type="button"
           className="drop-btn"
-          // A stray tap here would erase a certification, so it asks first.
           onClick={() => confirm(`לבטל את ההסמכה ל${tool}?`) && onToggleHeld()}
           aria-label={`בטל הסמכה ל${tool}`}
         >
           ✕
         </button>
       )}
+      <span className="name">{tool}</span>
+      <button
+        type="button"
+        className={`teach-btn ${canTeach ? 'on' : 'off'}`}
+        disabled={!canEdit}
+        onClick={onToggleTeach}
+        aria-pressed={canTeach}
+        aria-label={`${tool} — מלמד אחרים`}
+        // Hidden rather than absent, so every chip's text sits in the same place.
+        style={!canTeach && !canEdit ? { visibility: 'hidden' } : undefined}
+      >
+        <img className="teach" src={teachIcon} alt="" />
+      </button>
     </div>
   )
 }
