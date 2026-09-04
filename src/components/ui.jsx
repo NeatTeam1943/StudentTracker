@@ -66,11 +66,21 @@ export function ToolColumns({ membership, categories, order, canEdit, onToggleHe
     <>
       {/* On a phone the five categories stack, so this is how you reach
           HEAVY MACHINERY without scrolling past thirty tools. */}
+      {/* Buttons, not anchors. Under HashRouter the URL hash IS the route, so an
+          href="#cat-x" navigates to a route that doesn't exist and blanks the
+          page. scrollIntoView does the same job without touching the URL. */}
       <nav className="jump" aria-label="קטגוריות">
         {order.map((id) => (
-          <a key={id} href={`#cat-${id}`} style={{ background: categories[id].header }}>
+          <button
+            key={id}
+            type="button"
+            style={{ background: categories[id].header }}
+            onClick={() =>
+              document.getElementById(`cat-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+            }
+          >
             {categories[id].he} · {count(id)}/{(categories[id].items ?? []).length}
-          </a>
+          </button>
         ))}
       </nav>
       <div className="columns">

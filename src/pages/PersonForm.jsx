@@ -12,7 +12,7 @@ const GRADES = [
 const blank = {
   id: '',
   name: '',
-  role: 'חדש',
+  role: 'חבר צוות',
   phone: '',
   grade: "י'",
   gradeNum: 10,
@@ -106,6 +106,9 @@ export default function PersonForm() {
               תפקיד
             </label>
             <select id="role" value={form.role} onChange={(e) => set({ role: e.target.value })}>
+              {/* People imported before the role list changed keep their old
+                  value; showing it stops the field silently going blank. */}
+              {!ROLES.includes(form.role) && form.role && <option>{form.role}</option>}
               {ROLES.map((r) => (
                 <option key={r}>{r}</option>
               ))}

@@ -525,7 +525,8 @@ button {
   display: none;
 }
 
-.jump a {
+.jump a,
+.jump button {
   flex: 0 0 auto;
   font-size: 13px;
   font-weight: 800;

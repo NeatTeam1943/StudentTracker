@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { HashRouter, Routes, Route, NavLink, Link, useLocation } from 'react-router-dom'
+import { HashRouter, Routes, Route, NavLink, Link, Navigate, useLocation } from 'react-router-dom'
 import { StoreProvider, useStore } from './lib/store.jsx'
 import Roster from './pages/Roster.jsx'
 import Profile from './pages/Profile.jsx'
@@ -125,6 +125,9 @@ function Shell() {
         <Route path="/teams" element={<Teams />} />
         <Route path="/new" element={<PersonForm />} />
         <Route path="/edit/:id" element={<PersonForm />} />
+        {/* Safety net: an unknown hash used to render nothing at all, leaving
+            the header floating above an empty page with no way back. */}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </div>
   )
