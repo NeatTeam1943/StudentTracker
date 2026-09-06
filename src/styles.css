@@ -317,7 +317,7 @@ button {
 
 .id-card .badge-slot {
   flex: 0 0 auto;
-  width: 104px;
+  width: 136px;
   text-align: center;
 }
 
@@ -330,10 +330,11 @@ button {
 
 .wordmark {
   display: block;
-  margin: 0 auto -2px;
-  /* The normalised art has generous padding, so it needs more box to read. */
-  max-width: 132px;
+  /* Never wider than its slot, so margin auto can actually centre it. */
+  width: 100%;
+  max-width: 136px;
   height: auto;
+  margin: 0 auto -2px;
 }
 
 .id-card h2 {
