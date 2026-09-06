@@ -6,4 +6,10 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   base: './',
+  define: {
+    // Stamped at build time, shown on the מנטורים page. Makes it possible to
+    // tell at a glance which build is actually live, instead of inferring it
+    // from whether a change appears to have taken effect.
+    __BUILD_TIME__: JSON.stringify(new Date().toISOString().slice(0, 16).replace('T', ' ')),
+  },
 })

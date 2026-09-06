@@ -118,6 +118,10 @@ export default function Mentors() {
           </div>
         ))}
       </div>
+
+      <p className="empty" style={{ fontSize: 12, textAlign: 'center' }}>
+        גרסה: {__BUILD_TIME__}
+      </p>
     </>
   )
 }
