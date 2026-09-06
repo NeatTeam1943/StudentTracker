@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 export const badgeSrc = (badge) => `${import.meta.env.BASE_URL}assets/badges/${badge}.png`
 export const wordmarkSrc = (rankId) => `${import.meta.env.BASE_URL}assets/wordmarks/${rankId}.png`
 const teachIcon = `${import.meta.env.BASE_URL}assets/teach.png`
+const phoneIcon = `${import.meta.env.BASE_URL}assets/phone.png`
 
 export function RankBadge({ rank, size = 108 }) {
   if (!rank) return <div style={{ width: size, height: size }} />
@@ -146,7 +147,9 @@ export function IdCard({ person, rank, favoriteLabel = 'כלי אהוב', favori
       <hr />
       {person.phone && (
         <div className="field">
-          <span className="ico">☎</span>
+          <span className="ico">
+            <img className="ico-img" src={phoneIcon} alt="" />
+          </span>
           <span className="lbl">טלפון:</span>
           <a className="val" href={`tel:${person.phone.replace(/-/g, '')}`}>
             {person.phone}

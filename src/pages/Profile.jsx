@@ -228,130 +228,6 @@ export default function Profile() {
             </div>
           )}
 
-          {isMentor && (
-            <div className="panel" style={{ marginTop: 14 }}>
-              <h3>ניהול</h3>
-
-              {membership && (
-                <>
-                  <label className="f">דרגה ב{team.name}</label>
-                  <p style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', margin: '0 0 8px' }}>
-                    <button
-                      className={`team-pill${membership.autoRank !== false ? ' on' : ''}`}
-                      onClick={() => store.setAutoRank(person.id, true)}
-                    >
-                      אוטומטי
-                    </button>
-                    <button
-                      className={`team-pill${membership.autoRank === false ? ' on' : ''}`}
-                      onClick={() => store.setAutoRank(person.id, false)}
-                    >
-                      ידני
-                    </button>
-                  </p>
-                  <select
-                    id="rank"
-                    value={membership.rankId ?? ''}
-                    disabled={membership.autoRank !== false}
-                    onChange={(e) => store.setRank(person.id, e.target.value || null, true)}
-                  >
-                    <option value="">ללא דרגה</option>
-                    {ranks.map((r) => (
-                      <option key={r.id} value={r.id}>
-                        {r.name}
-                      </option>
-                    ))}
-                  </select>
-                  <p className="empty" style={{ padding: '6px 0 0', marginBottom: 0 }}>
-                    {membership.autoRank !== false
-                      ? 'הדרגה מתעדכנת לבד לפי ההסמכות. עברו ל"ידני" כדי לקבוע חריג.'
-                      : 'דרגה שנקבעה ידנית. היא לא תשתנה עם ההסמכות עד שתחזירו לאוטומטי.'}
-                  </p>
-                </>
-              )}
-
-              {otherTeams.length > 0 && (
-                <div style={{ marginTop: 14 }}>
-                  <label className="f" htmlFor="target">
-                    צוות אחר
-                  </label>
-                  <select id="target" value={target} onChange={(e) => setTarget(e.target.value)}>
-                    <option value="">בחרו צוות…</option>
-                    {otherTeams.map((t) => (
-                      <option key={t.id} value={t.id}>
-                        {t.name}
-                        {person.memberships?.[t.id] ? ' (כבר חבר)' : ''}
-                      </option>
-                    ))}
-                  </select>
-                  <p style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 0 }}>
-                    <button
-                      className="btn sm"
-                      disabled={!target}
-                      onClick={() => store.joinTeam(person.id, target)}
-                      title="מצטרף לצוות החדש ונשאר פעיל כאן"
-                    >
-                      צירוף בנוסף
-                    </button>
-                    <button
-                      className="btn sm primary"
-                      disabled={!target || !membership}
-                      onClick={() => store.transfer(person.id, team.id, target)}
-                      title="מצטרף לצוות החדש ומפסיק להיות פעיל כאן"
-                    >
-                      העברה
-                    </button>
-                  </p>
-                </div>
-              )}
-
-              {membership && !inactiveHere && (
-                <button
-                  className="btn sm"
-                  onClick={() => store.setTeamActive(person.id, team.id, false)}
-                  style={{ marginTop: 10 }}
-                >
-                  סימון כלא פעיל ב{team.name}
-                </button>
-              )}
-
-              {!membership && (
-                <button className="btn sm primary" onClick={() => store.joinTeam(person.id, team.id)}>
-                  צירוף ל{team.name}
-                </button>
-              )}
-
-              <label className="f" style={{ marginTop: 14 }} htmlFor="note">
-                הערה ליומן
-              </label>
-              <form
-                className="note-form"
-                onSubmit={(e) => {
-                  e.preventDefault()
-                  store.addNote(person.id, note).then(() => setNote(''))
-                }}
-              >
-                <input
-                  id="note"
-                  value={note}
-                  onChange={(e) => setNote(e.target.value)}
-                  placeholder="מה קרה, מה לזכור…"
-                />
-                <button className="btn primary" disabled={!note.trim()}>
-                  הוספה
-                </button>
-              </form>
-
-              <p style={{ display: 'flex', gap: 8, marginTop: 14, marginBottom: 0, flexWrap: 'wrap' }}>
-                <Link className="btn sm" to={`/edit/${person.id}`}>
-                  עריכת פרטים
-                </Link>
-                <Link className="btn sm ghost" to={`/logs?person=${person.id}`}>
-                  היסטוריה
-                </Link>
-              </p>
-            </div>
-          )}
         </div>
 
         {membership && view !== 'deck' ? (
@@ -372,6 +248,131 @@ export default function Profile() {
               {Object.keys(person.memberships ?? {}).length
                 ? 'בחרו צוות אחר למעלה כדי לראות את ההסמכות שלו.'
                 : 'עדיין לא שויך לאף צוות.'}
+            </p>
+          </div>
+        )}
+
+        {isMentor && (
+          <div className="panel" style={{ marginTop: 14 }}>
+            <h3>ניהול</h3>
+
+            {membership && (
+              <>
+                <label className="f">דרגה ב{team.name}</label>
+                <p style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', margin: '0 0 8px' }}>
+                  <button
+                    className={`team-pill${membership.autoRank !== false ? ' on' : ''}`}
+                    onClick={() => store.setAutoRank(person.id, true)}
+                  >
+                    אוטומטי
+                  </button>
+                  <button
+                    className={`team-pill${membership.autoRank === false ? ' on' : ''}`}
+                    onClick={() => store.setAutoRank(person.id, false)}
+                  >
+                    ידני
+                  </button>
+                </p>
+                <select
+                  id="rank"
+                  value={membership.rankId ?? ''}
+                  disabled={membership.autoRank !== false}
+                  onChange={(e) => store.setRank(person.id, e.target.value || null, true)}
+                >
+                  <option value="">ללא דרגה</option>
+                  {ranks.map((r) => (
+                    <option key={r.id} value={r.id}>
+                      {r.name}
+                    </option>
+                  ))}
+                </select>
+                <p className="empty" style={{ padding: '6px 0 0', marginBottom: 0 }}>
+                  {membership.autoRank !== false
+                    ? 'הדרגה מתעדכנת לבד לפי ההסמכות. עברו ל"ידני" כדי לקבוע חריג.'
+                    : 'דרגה שנקבעה ידנית. היא לא תשתנה עם ההסמכות עד שתחזירו לאוטומטי.'}
+                </p>
+              </>
+            )}
+
+            {otherTeams.length > 0 && (
+              <div style={{ marginTop: 14 }}>
+                <label className="f" htmlFor="target">
+                  צוות אחר
+                </label>
+                <select id="target" value={target} onChange={(e) => setTarget(e.target.value)}>
+                  <option value="">בחרו צוות…</option>
+                  {otherTeams.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.name}
+                      {person.memberships?.[t.id] ? ' (כבר חבר)' : ''}
+                    </option>
+                  ))}
+                </select>
+                <p style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 0 }}>
+                  <button
+                    className="btn sm"
+                    disabled={!target}
+                    onClick={() => store.joinTeam(person.id, target)}
+                    title="מצטרף לצוות החדש ונשאר פעיל כאן"
+                  >
+                    צירוף בנוסף
+                  </button>
+                  <button
+                    className="btn sm primary"
+                    disabled={!target || !membership}
+                    onClick={() => store.transfer(person.id, team.id, target)}
+                    title="מצטרף לצוות החדש ומפסיק להיות פעיל כאן"
+                  >
+                    העברה
+                  </button>
+                </p>
+              </div>
+            )}
+
+            {membership && !inactiveHere && (
+              <button
+                className="btn sm"
+                onClick={() => store.setTeamActive(person.id, team.id, false)}
+                style={{ marginTop: 10 }}
+              >
+                סימון כלא פעיל ב{team.name}
+              </button>
+            )}
+
+            {!membership && (
+              <button className="btn sm primary" onClick={() => store.joinTeam(person.id, team.id)}>
+                צירוף ל{team.name}
+              </button>
+            )}
+
+            <label className="f" style={{ marginTop: 14 }} htmlFor="note">
+              הערה ליומן
+            </label>
+            <form
+              className="note-form"
+              onSubmit={(e) => {
+                e.preventDefault()
+                store.addNote(person.id, note).then(() => setNote(''))
+              }}
+            >
+              <input
+                id="note"
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+                placeholder="מה קרה, מה לזכור…"
+              />
+              <button className="btn primary" disabled={!note.trim()}>
+                הוספה
+              </button>
+            </form>
+
+            <p style={{ display: 'flex', gap: 8, marginTop: 14, marginBottom: 0, flexWrap: 'wrap' }}>
+              <Link className="btn sm" to={`/edit/${person.id}`}>
+                עריכת פרטים
+              </Link>
+              <Link className="btn sm ghost" to={`/logs?person=${person.id}`}>
+                היסטוריה
+              </Link>
             </p>
           </div>
         )}

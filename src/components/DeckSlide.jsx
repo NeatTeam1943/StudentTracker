@@ -286,6 +286,7 @@ export default function DeckSlide({
           <div className="deck-divider" />
 
           <div className="deck-field" style={{ top: FIELD_Y.phone }}>
+            <img className="deck-ico" src={`${import.meta.env.BASE_URL}assets/phone.png`} alt="" />
             <span className="lbl">טלפון:</span>
             <span className="val">{person.phone}</span>
           </div>
