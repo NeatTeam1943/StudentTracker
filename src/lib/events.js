@@ -95,6 +95,10 @@ export function describeEvent(e, nameOf, rankName) {
       return 'הדרגות עודכנו'
     case 'mentor_added':
       return `${e.name} קיבל הרשאת מנטור`
+    case 'mentor_to_lead':
+      return `${e.name} הועבר ממנטור לראש"צ`
+    case 'lead_to_mentor':
+      return `${e.name} הועבר מראש"צ למנטור`
     case 'lead_added':
       return `${e.name} מונה לראש"צ`
     case 'lead_unlocked':

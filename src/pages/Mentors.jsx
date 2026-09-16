@@ -123,7 +123,7 @@ export default function Mentors() {
           </p>
         )}
         {leads.map((l) => (
-          <div className="log-row" key={l.uid}>
+          <div className="log-row" key={l.uid} style={{ flexWrap: 'wrap' }}>
             <span className={`dot ${l.canEdit ? '' : 'warn'}`} />
             <span>{l.name || l.uid}</span>
             <span className="who">{l.canEdit ? 'עריכה פתוחה' : 'עריכה נעולה'}</span>
@@ -135,6 +135,9 @@ export default function Mentors() {
                   onClick={() => run(() => store.setLeadEdit(l.uid, !l.canEdit, l.name))}
                 >
                   {l.canEdit ? 'נעילה' : 'פתיחה'}
+                </button>
+                <button className="btn sm" disabled={busy} onClick={() => run(() => store.makeMentor(l.uid, l.name || l.uid))}>
+                  הפיכה למנטור
                 </button>
                 <button
                   className="btn danger sm"
@@ -156,21 +159,31 @@ export default function Mentors() {
         <h3>מנטורים</h3>
         {mentors.length === 0 && <p className="empty">אין עדיין מנטורים.</p>}
         {mentors.map((m) => (
-          <div className="log-row" key={m.uid}>
+          <div className="log-row" key={m.uid} style={{ flexWrap: 'wrap' }}>
             <span className="dot" />
             <span>{m.name || m.uid}</span>
             {isMentor && m.uid !== user?.uid && (
-              <button
-                className="btn danger sm"
-                style={{ marginInlineStart: 'auto' }}
-                disabled={busy}
-                onClick={() =>
-                  confirm(`להסיר את ההרשאה של ${m.name || m.uid}?`) &&
-                  run(() => store.revokeMentor(m.uid, m.name))
-                }
-              >
-                הסרה
-              </button>
+              <>
+                <button
+                  className="btn sm"
+                  style={{ marginInlineStart: 'auto' }}
+                  disabled={busy}
+                  onClick={() => run(() => store.makeLead(m.uid, m.name || m.uid))}
+                  title='מעביר לראשי הצוות עם עריכה פתוחה'
+                >
+                  הפיכה לראש"צ
+                </button>
+                <button
+                  className="btn danger sm"
+                  disabled={busy}
+                  onClick={() =>
+                    confirm(`להסיר את ההרשאה של ${m.name || m.uid}?`) &&
+                    run(() => store.revokeMentor(m.uid, m.name))
+                  }
+                >
+                  הסרה
+                </button>
+              </>
             )}
             {m.uid === user?.uid && <span className="who">זה אתם</span>}
           </div>
