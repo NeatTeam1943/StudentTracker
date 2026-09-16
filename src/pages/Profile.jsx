@@ -3,12 +3,19 @@ import { Link, useParams } from 'react-router-dom'
 import { useStore } from '../lib/store.jsx'
 import { IdCard, ToolColumns, RankBadge } from '../components/ui.jsx'
 import DeckSlide, { useLandscape } from '../components/DeckSlide.jsx'
+import { ROLES } from '../data/seed.js'
+
+const GRADES = [
+  { label: "י'", num: 10 },
+  { label: "יא'", num: 11 },
+  { label: "יב'", num: 12 },
+]
 import { displayRank, promotionSuggestion, nextRankProgress, membershipIn, favoriteOf } from '../lib/ranks.js'
 
 export default function Profile() {
   const { id } = useParams()
   const store = useStore()
-  const { ranks, isMentor, teams, team } = store
+  const { ranks, canEdit, teams, team } = store
   const [target, setTarget] = useState('')
   const landscape = useLandscape()
   // Deck layout is the default; scroll mode is the comfortable one for editing.
@@ -56,7 +63,7 @@ export default function Profile() {
   // Only meaningful for a membership pinned to manual — an automatic one is
   // already at its earned rank.
   const suggestion =
-    isMentor && membership && membership.autoRank === false
+    canEdit && membership && membership.autoRank === false
       ? promotionSuggestion(team, ranks, person)
       : null
   const progress = membership ? nextRankProgress(team, ranks, person) : null
@@ -108,7 +115,7 @@ export default function Profile() {
       {person.archived && (
         <div className="suggestion" style={{ borderColor: '#ffb020', background: 'rgba(255,176,32,0.1)' }}>
           <span>הפרופיל בארכיון ואינו מופיע ברשימת הצוות.</span>
-          {isMentor && (
+          {canEdit && (
             <button className="btn sm" onClick={() => store.setArchived(person.id, false)}>
               החזרה מהארכיון
             </button>
@@ -121,7 +128,7 @@ export default function Profile() {
           <span>
             לא פעיל ב{team.name}. הדרגה וההסמכות נשמרו, והוא עדיין יכול ללמד את מה שהוסמך ללמד.
           </span>
-          {isMentor && (
+          {canEdit && (
             <button className="btn sm" onClick={() => store.setTeamActive(person.id, team.id, true)}>
               החזרה לפעילות
             </button>
@@ -155,7 +162,7 @@ export default function Profile() {
           >
             תצוגת גלילה
           </button>
-          {view === 'deck' && isMentor && membership && !inactiveHere && (
+          {view === 'deck' && canEdit && membership && !inactiveHere && (
             <button
               className={`team-pill${deckEdit ? ' on' : ''}`}
               onClick={() => setDeckEdit((v) => !v)}
@@ -181,7 +188,7 @@ export default function Profile() {
           favoriteLabel={team.favoriteLabel ?? 'כלי אהוב'}
           favorite={favoriteOf(person, team.id)}
           mode={landscape && window.innerHeight < 600 ? 'fill' : 'fit'}
-          canEdit={deckEdit && isMentor && !inactiveHere}
+          canEdit={deckEdit && canEdit && !inactiveHere}
           onToggleHeld={(tool, has) =>
             has ? store.revokeTool(person.id, tool) : store.grantTool(person.id, tool)
           }
@@ -235,7 +242,7 @@ export default function Profile() {
             membership={membership}
             categories={store.categories}
             order={store.order}
-            canEdit={isMentor && !inactiveHere}
+            canEdit={canEdit && !inactiveHere}
             onToggleHeld={(tool, held) =>
               held ? store.revokeTool(person.id, tool) : store.grantTool(person.id, tool)
             }
@@ -252,7 +259,7 @@ export default function Profile() {
           </div>
         )}
 
-        {isMentor && (
+        {canEdit && (
           <div className="panel" style={{ marginTop: 14 }}>
             <h3>ניהול</h3>
 
@@ -344,6 +351,65 @@ export default function Profile() {
                 צירוף ל{team.name}
               </button>
             )}
+
+            {/* The same three fields as the edit form, inline — they change
+                often enough that a separate page each time is a nuisance. */}
+            <label className="f" style={{ marginTop: 14 }}>
+              פרטים
+            </label>
+            <div className="form-grid">
+              <div>
+                <label className="f" htmlFor="q-role">
+                  תפקיד
+                </label>
+                <select
+                  id="q-role"
+                  value={person.role ?? ''}
+                  onChange={(e) => store.savePerson({ ...person, role: e.target.value })}
+                >
+                  {!ROLES.includes(person.role) && person.role && <option>{person.role}</option>}
+                  {ROLES.map((r) => (
+                    <option key={r}>{r}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="f" htmlFor="q-grade">
+                  שכבה
+                </label>
+                <select
+                  id="q-grade"
+                  value={person.isMentor ? 'mentor' : person.grade}
+                  onChange={(e) => {
+                    if (e.target.value === 'mentor')
+                      return store.savePerson({ ...person, isMentor: true, gradeNum: 99, grade: 'מנטור' })
+                    const g = GRADES.find((x) => x.label === e.target.value)
+                    store.savePerson({ ...person, isMentor: false, grade: g.label, gradeNum: g.num })
+                  }}
+                >
+                  {GRADES.map((g) => (
+                    <option key={g.label} value={g.label}>
+                      {g.label}
+                    </option>
+                  ))}
+                  <option value="mentor">מנטור</option>
+                </select>
+              </div>
+              <div>
+                <label className="f" htmlFor="q-fav">
+                  {team.favoriteLabel ?? 'כלי אהוב'}
+                </label>
+                <input
+                  id="q-fav"
+                  key={`${person.id}-${team.id}-${favoriteOf(person, team.id)}`}
+                  defaultValue={favoriteOf(person, team.id)}
+                  onBlur={(e) => {
+                    const v = e.target.value.trim()
+                    if (v !== favoriteOf(person, team.id)) store.setFavorite(person.id, v)
+                  }}
+                />
+              </div>
+            </div>
 
             <label className="f" style={{ marginTop: 14 }} htmlFor="note">
               הערה ליומן

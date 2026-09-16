@@ -14,6 +14,8 @@ export const EVENT_TONE = {
   tool_deleted: 'bad',
   rank_set: 'warn',
   mentor_removed: 'bad',
+  lead_removed: 'bad',
+  lead_locked: 'warn',
   team_deactivated: 'warn',
   team_deleted: 'bad',
   team_left: 'bad',
@@ -93,6 +95,14 @@ export function describeEvent(e, nameOf, rankName) {
       return 'הדרגות עודכנו'
     case 'mentor_added':
       return `${e.name} קיבל הרשאת מנטור`
+    case 'lead_added':
+      return `${e.name} מונה לראש"צ`
+    case 'lead_unlocked':
+      return `הרשאות העריכה של ${e.name} נפתחו`
+    case 'lead_locked':
+      return `הרשאות העריכה של ${e.name} ננעלו`
+    case 'lead_removed':
+      return `${e.name} הוסר מרשימת ראשי הצוות`
     case 'mentor_removed':
       return `הרשאת המנטור של ${e.name} הוסרה`
     case 'deck_imported':

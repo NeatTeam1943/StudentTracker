@@ -45,7 +45,7 @@ export default function Logs() {
       </div>
 
       <div className="panel">
-        {store.isMentor && filter && (
+        {store.canEdit && filter && (
           <form
             className="note-form"
             onSubmit={(e) => {
@@ -63,7 +63,7 @@ export default function Logs() {
             </button>
           </form>
         )}
-        {store.isMentor && !filter && (
+        {store.canEdit && !filter && (
           <p className="empty" style={{ marginTop: 0 }}>
             בחרו חבר צוות כדי להוסיף לו הערה.
           </p>

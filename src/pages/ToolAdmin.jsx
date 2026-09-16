@@ -7,7 +7,7 @@ export default function ToolAdmin() {
   const [draft, setDraft] = useState({ category: order[0], name: '' })
   const [renaming, setRenaming] = useState(null)
 
-  if (!store.isMentor)
+  if (!store.canEdit)
     return (
       <div className="panel">
         <h3>נדרשת הרשאת מנטור</h3>

@@ -13,7 +13,7 @@ const GROUPS = [
 
 export default function Roster() {
   const store = useStore()
-  const { team, ranks, isMentor } = store
+  const { team, ranks, canEdit } = store
   const [importing, setImporting] = useState(false)
   const [showArchive, setShowArchive] = useState(false)
   const [migrating, setMigrating] = useState(false)
@@ -25,7 +25,7 @@ export default function Roster() {
     return (
       <div className="panel">
         <h3>אין עדיין חברי צוות</h3>
-        {isMentor ? (
+        {canEdit ? (
           <>
             <p className="empty">
               ניתן לייבא את נתוני צוות הבנייה מהמצגת המקורית — 13 חברי צוות, רשימת
@@ -58,7 +58,7 @@ export default function Roster() {
     return (
       <div className="panel">
         <h3>יש לעדכן את מבנה הנתונים</h3>
-        {isMentor ? (
+        {canEdit ? (
           <>
             <p className="empty">
               הנתונים הקיימים נשמרו לפני שהמערכת תמכה בכמה צוותים. העדכון משייך את כל
@@ -89,7 +89,7 @@ export default function Roster() {
   // Archived outright, or still on record here but no longer active.
   const archive = [...store.roster.filter((p) => p.archived), ...store.alumni]
 
-  const suggestions = isMentor
+  const suggestions = canEdit
     ? active
         .filter((p) => p.memberships?.[team.id]?.autoRank === false)
         .map((p) => [p, promotionSuggestion(team, ranks, p)])
@@ -140,7 +140,7 @@ export default function Roster() {
         <div className="panel">
           <h3>אין עדיין חברים בצוות {team.name}</h3>
           <p className="empty">
-            {isMentor
+            {canEdit
               ? 'צרפו חברי צוות מהפרופיל שלהם, או הוסיפו חבר צוות חדש.'
               : 'הצוות עדיין לא אויש.'}
           </p>
@@ -188,7 +188,7 @@ export default function Roster() {
         </section>
       )}
 
-      {isMentor && (
+      {canEdit && (
         <p style={{ marginTop: 28 }}>
           <Link className="btn primary" to="/new">
             הוספת חבר צוות

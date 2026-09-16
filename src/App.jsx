@@ -30,12 +30,12 @@ function TopBar() {
         <NavLink to="/logs" className={cls}>
           יומן
         </NavLink>
-        {store.isMentor && (
+        {store.canEdit && (
           <NavLink to="/tools" className={cls}>
             ניהול {store.team?.itemNoun ?? 'כלים'}
           </NavLink>
         )}
-        {store.isMentor && (
+        {store.canEdit && (
           <NavLink to="/teams" className={cls}>
             צוותים
           </NavLink>
@@ -44,7 +44,7 @@ function TopBar() {
             to be able to get back here to send their request. */}
         {store.user && (
           <NavLink to="/mentors" className={cls}>
-            מנטורים
+            הרשאות
             {store.requests.length > 0 && <span className="badge-count">{store.requests.length}</span>}
           </NavLink>
         )}
@@ -53,7 +53,7 @@ function TopBar() {
       <div className="mentor-chip">
         {store.user ? (
           <>
-            {!store.isMentor && (
+            {!store.isMentor && !store.isLead && (
               <Link className="btn sm" to="/mentors">
                 בקשת הרשאה
               </Link>

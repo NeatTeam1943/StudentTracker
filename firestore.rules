@@ -8,31 +8,43 @@ service cloud.firestore {
         && exists(/databases/$(database)/documents/mentors/$(request.auth.uid));
     }
 
+    // A ראש"צ whose editing is currently unlocked. Mentors control the flag;
+    // while it is false the account behaves exactly like any student's.
+    function isUnlockedLead() {
+      return request.auth != null
+        && exists(/databases/$(database)/documents/leads/$(request.auth.uid))
+        && get(/databases/$(database)/documents/leads/$(request.auth.uid)).data.canEdit == true;
+    }
+
+    function canEdit() {
+      return isMentor() || isUnlockedLead();
+    }
+
     // Everyone reads. Guests see the same profiles mentors do, with no sign-in.
     match /people/{id} {
       allow read: if true;
-      allow write: if isMentor();
+      allow write: if canEdit();
     }
 
     // One sub-team: its categories, its items, its rank requirements.
     match /teams/{id} {
       allow read: if true;
-      allow write: if isMentor();
+      allow write: if canEdit();
     }
 
     match /meta/{id} {
       allow read: if true;
-      allow write: if isMentor();
+      allow write: if canEdit();
     }
 
-    // The log is append-only. Nobody edits or deletes history, mentors included.
+    // The log is append-only. Nobody edits or deletes history.
     match /events/{id} {
       allow read: if true;
-      allow create: if isMentor();
+      allow create: if canEdit();
       allow update, delete: if false;
     }
 
-    // Anyone signed in can ask for mentor access, and only for themselves —
+    // Anyone signed in can ask for access, and only for themselves —
     // request.auth.uid == uid stops one person requesting on another's behalf.
     match /mentorRequests/{uid} {
       allow read: if isMentor() || (request.auth != null && request.auth.uid == uid);
@@ -41,12 +53,20 @@ service cloud.firestore {
       allow update: if false;
     }
 
-    // Existing mentors approve new ones from the מנטורים page.
-    // Readable by all so the app knows whether to show edit controls.
+    // Mentors approve other mentors. Readable by all so the app knows whether
+    // to show edit controls.
     match /mentors/{uid} {
       allow read: if true;
       allow create, delete: if isMentor();
       allow update: if false;
+    }
+
+    // ראשי צוות. Only a mentor may add one, remove one, or lock and unlock
+    // their editing — a ראש"צ can never grant that to themselves or to anyone
+    // else, even while unlocked.
+    match /leads/{uid} {
+      allow read: if true;
+      allow write: if isMentor();
     }
   }
 }

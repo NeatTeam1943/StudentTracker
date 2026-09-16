@@ -61,6 +61,7 @@ export function StoreProvider({ children }) {
   const [catalog, setCatalog] = useState(null)
   const [events, setEvents] = useState([])
   const [mentors, setMentors] = useState([])
+  const [leads, setLeads] = useState([])
   const [requests, setRequests] = useState([])
   const [user, setUser] = useState(null)
   const [isMentor, setIsMentor] = useState(false)
@@ -120,6 +121,11 @@ export function StoreProvider({ children }) {
   )
 
   useEffect(
+    () => onSnapshot(collection(db, 'leads'), (snap) => setLeads(snap.docs.map((d) => ({ uid: d.id, ...d.data() })))),
+    [],
+  )
+
+  useEffect(
     () =>
       onAuthStateChanged(auth, async (u) => {
         setUser(u)
@@ -172,7 +178,17 @@ export function StoreProvider({ children }) {
       user,
       isMentor,
       mentors,
+      leads,
       requests,
+
+      /* A ראש"צ is a student who can be handed mentor-level editing, and have
+         it taken away again. While locked they see exactly what any student
+         sees. Only a mentor can move that switch. */
+      lead: user ? (leads.find((l) => l.uid === user.uid) ?? null) : null,
+      isLead: Boolean(user && leads.some((l) => l.uid === user.uid)),
+      canEdit:
+        isMentor || Boolean(user && leads.find((l) => l.uid === user.uid)?.canEdit === true),
+
       person: find,
 
       // Active members of the team being viewed. An inactive membership keeps
@@ -345,6 +361,12 @@ export function StoreProvider({ children }) {
         const body = text.trim()
         if (!body) return Promise.resolve()
         return log({ type: 'note', personId, text: body, teamId: team.id })
+      },
+
+      // The "favourite" line is per team, so it lives in the membership.
+      async setFavorite(id, value) {
+        await updateDoc(personRef(id), new FieldPath('memberships', team.id, 'favorite'), value)
+        await log({ type: 'person_updated', personId: id, name: find(id)?.name })
       },
 
       async savePerson(person) {
@@ -528,6 +550,27 @@ export function StoreProvider({ children }) {
           email: user.email ?? '',
           at: stamp(),
         }),
+
+      async approveLead(uid, name) {
+        await setDoc(doc(db, 'leads', uid), {
+          name,
+          canEdit: false,
+          addedBy: user?.displayName ?? '—',
+          at: stamp(),
+        })
+        await deleteDoc(doc(db, 'mentorRequests', uid)).catch(() => {})
+        await log({ type: 'lead_added', name })
+      },
+
+      async setLeadEdit(uid, canEdit, name) {
+        await setDoc(doc(db, 'leads', uid), { canEdit }, { merge: true })
+        await log({ type: canEdit ? 'lead_unlocked' : 'lead_locked', name })
+      },
+
+      async revokeLead(uid, name) {
+        await deleteDoc(doc(db, 'leads', uid))
+        await log({ type: 'lead_removed', name })
+      },
 
       async approveMentor(uid, name) {
         await setDoc(doc(db, 'mentors', uid), { name, addedBy: user?.displayName ?? '—', at: stamp() })

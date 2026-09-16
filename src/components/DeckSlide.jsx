@@ -185,11 +185,7 @@ export default function DeckSlide({
           +
         </button>
       </div>
-      <div
-        className={`deck-view ${mode}`}
-        ref={ref}
-        onDoubleClick={() => setZoom((z) => (z > 1 ? 1 : 2.5))}
-      >
+      <div className={`deck-view ${mode}`} ref={ref}>
       <div
         className="deck-canvas-box"
         style={{ width: canvasW * scale, height: SLIDE_H * scale }}

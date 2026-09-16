@@ -16,7 +16,7 @@ const blank = {
   phone: '',
   grade: "י'",
   gradeNum: 10,
-  isMentor: false,
+  canEdit: false,
 }
 
 const slugify = (name) =>
@@ -43,7 +43,7 @@ export default function PersonForm() {
   )
   const [busy, setBusy] = useState(false)
 
-  if (!store.isMentor)
+  if (!store.canEdit)
     return (
       <div className="panel">
         <h3>נדרשת הרשאת מנטור</h3>
@@ -160,11 +160,11 @@ export default function PersonForm() {
             </label>
             <select
               id="grade"
-              value={form.isMentor ? 'mentor' : form.grade}
+              value={form.canEdit ? 'mentor' : form.grade}
               onChange={(e) => {
-                if (e.target.value === 'mentor') return set({ isMentor: true, gradeNum: 99, grade: 'מנטור' })
+                if (e.target.value === 'mentor') return set({ canEdit: true, gradeNum: 99, grade: 'מנטור' })
                 const g = GRADES.find((x) => x.label === e.target.value)
-                set({ isMentor: false, grade: g.label, gradeNum: g.num })
+                set({ canEdit: false, grade: g.label, gradeNum: g.num })
               }}
             >
               {GRADES.map((g) => (
@@ -175,7 +175,7 @@ export default function PersonForm() {
               <option value="mentor">מנטור</option>
             </select>
           </div>
-          {form.isMentor && (
+          {form.canEdit && (
             <div>
               <label className="f" htmlFor="gradeText">
                 ותק להצגה

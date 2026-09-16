@@ -34,7 +34,7 @@ const slug = (s) =>
 
 export default function Teams() {
   const store = useStore()
-  const { teams, team, ranks, categories, order, isMentor } = store
+  const { teams, team, ranks, categories, order, canEdit } = store
   const [draft, setDraft] = useState({
     name: '',
     itemNoun: 'הכשרות',
@@ -45,7 +45,7 @@ export default function Teams() {
 
   if (store.loading) return <p className="empty">טוען…</p>
 
-  if (!isMentor)
+  if (!canEdit)
     return (
       <div className="panel">
         <h3>נדרשת הרשאת מנטור</h3>
