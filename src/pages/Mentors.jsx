@@ -136,9 +136,6 @@ export default function Mentors() {
                 >
                   {l.canEdit ? 'נעילה' : 'פתיחה'}
                 </button>
-                <button className="btn sm" disabled={busy} onClick={() => run(() => store.makeMentor(l.uid, l.name || l.uid))}>
-                  הפיכה למנטור
-                </button>
                 <button
                   className="btn danger sm"
                   disabled={busy}
@@ -165,16 +162,8 @@ export default function Mentors() {
             {isMentor && m.uid !== user?.uid && (
               <>
                 <button
-                  className="btn sm"
-                  style={{ marginInlineStart: 'auto' }}
-                  disabled={busy}
-                  onClick={() => run(() => store.makeLead(m.uid, m.name || m.uid))}
-                  title='מעביר לראשי הצוות עם עריכה פתוחה'
-                >
-                  הפיכה לראש"צ
-                </button>
-                <button
                   className="btn danger sm"
+                  style={{ marginInlineStart: 'auto' }}
                   disabled={busy}
                   onClick={() =>
                     confirm(`להסיר את ההרשאה של ${m.name || m.uid}?`) &&

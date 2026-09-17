@@ -63,6 +63,20 @@ export default function Logs() {
             </button>
           </form>
         )}
+        {store.isMentor && filter && (
+          <p style={{ marginTop: 0 }}>
+            <button
+              className="btn sm danger"
+              onClick={() =>
+                confirm(
+                  `לנקות את כל היומן של ${store.person(filter)?.name ?? ''}? ההסמכות והדרגה לא ישתנו, אבל ההיסטוריה וההערות יימחקו לצמיתות.`,
+                ) && store.clearPersonLog(filter)
+              }
+            >
+              ניקוי היומן של חבר הצוות
+            </button>
+          </p>
+        )}
         {store.canEdit && !filter && (
           <p className="empty" style={{ marginTop: 0 }}>
             בחרו חבר צוות כדי להוסיף לו הערה.

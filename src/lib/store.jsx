@@ -8,8 +8,11 @@ import {
   updateDoc,
   onSnapshot,
   query,
+  where,
   orderBy,
   limit,
+  getDocs,
+  writeBatch,
   getDoc,
   serverTimestamp,
   deleteField,
@@ -357,6 +360,25 @@ export function StoreProvider({ children }) {
         return removed
       },
 
+      /* Clears one person's history. Mentor-only, and the clearing itself is
+         logged straight afterwards — so the log can be emptied but never
+         silently. Queries the server rather than the local cache, which only
+         holds the most recent 300 entries. */
+      async clearPersonLog(personId) {
+        const name = find(personId)?.name
+        const snap = await getDocs(query(collection(db, 'events'), where('personId', '==', personId)))
+        let removed = 0
+        const docs = snap.docs
+        for (let i = 0; i < docs.length; i += 400) {
+          const batch = writeBatch(db)
+          for (const d of docs.slice(i, i + 400)) batch.delete(d.ref)
+          await batch.commit()
+          removed += Math.min(400, docs.length - i)
+        }
+        await log({ type: 'log_cleared', personId, name, count: removed })
+        return removed
+      },
+
       addNote(personId, text) {
         const body = text.trim()
         if (!body) return Promise.resolve()
@@ -560,36 +582,6 @@ export function StoreProvider({ children }) {
         })
         await deleteDoc(doc(db, 'mentorRequests', uid)).catch(() => {})
         await log({ type: 'lead_added', name })
-      },
-
-      /* Move someone between the two roles in place. No re-login: both
-         collections are live-subscribed, so their permissions change as soon
-         as the documents do. */
-      async makeLead(uid, name, canEdit = true) {
-        await setDoc(doc(db, 'leads', uid), {
-          name,
-          canEdit,
-          addedBy: user?.displayName ?? '—',
-          at: stamp(),
-        })
-        await deleteDoc(doc(db, 'mentors', uid)).catch(() => {})
-        await log({ type: 'mentor_to_lead', name })
-      },
-
-      async makeMentor(uid, name) {
-        await setDoc(doc(db, 'mentors', uid), { name, addedBy: user?.displayName ?? '—', at: stamp() })
-        await deleteDoc(doc(db, 'leads', uid)).catch(() => {})
-        await log({ type: 'lead_to_mentor', name })
-      },
-
-      async setLeadEdit(uid, canEdit, name) {
-        await setDoc(doc(db, 'leads', uid), { canEdit }, { merge: true })
-        await log({ type: canEdit ? 'lead_unlocked' : 'lead_locked', name })
-      },
-
-      async revokeLead(uid, name) {
-        await deleteDoc(doc(db, 'leads', uid))
-        await log({ type: 'lead_removed', name })
       },
 
       async approveMentor(uid, name) {

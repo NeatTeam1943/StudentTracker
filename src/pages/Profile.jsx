@@ -433,6 +433,19 @@ export default function Profile() {
             </form>
 
             <p style={{ display: 'flex', gap: 8, marginTop: 14, marginBottom: 0, flexWrap: 'wrap' }}>
+              {/* Mentor-only: an unlocked ראש"צ can write history but not erase it. */}
+              {store.isMentor && (
+                <button
+                  className="btn sm danger"
+                  onClick={() =>
+                    confirm(
+                      `לנקות את כל היומן של ${person.name}? ההסמכות והדרגה לא ישתנו, אבל ההיסטוריה וההערות יימחקו לצמיתות.`,
+                    ) && store.clearPersonLog(person.id)
+                  }
+                >
+                  ניקוי יומן
+                </button>
+              )}
               <Link className="btn sm" to={`/edit/${person.id}`}>
                 עריכת פרטים
               </Link>

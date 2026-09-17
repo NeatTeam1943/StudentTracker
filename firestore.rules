@@ -37,11 +37,14 @@ service cloud.firestore {
       allow write: if canEdit();
     }
 
-    // The log is append-only. Nobody edits or deletes history.
+    // Entries can never be edited — only created, or cleared wholesale by a
+    // mentor. Deletion is deliberately mentor-only: an unlocked ראש"צ can write
+    // history but not erase it.
     match /events/{id} {
       allow read: if true;
       allow create: if canEdit();
-      allow update, delete: if false;
+      allow update: if false;
+      allow delete: if isMentor();
     }
 
     // Anyone signed in can ask for access, and only for themselves —

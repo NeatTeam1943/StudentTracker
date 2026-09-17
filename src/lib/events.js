@@ -21,6 +21,7 @@ export const EVENT_TONE = {
   team_left: 'bad',
   category_deleted: 'bad',
   auto_rank_off: 'warn',
+  log_cleared: 'bad',
   note: 'note',
 }
 
@@ -111,6 +112,8 @@ export function describeEvent(e, nameOf, rankName) {
       return `הרשאת המנטור של ${e.name} הוסרה`
     case 'deck_imported':
       return `יובאו ${e.count} חברי צוות מהמצגת`
+    case 'log_cleared':
+      return `היומן של ${e.name ?? who} נוקה (${e.count} רשומות)`
     case 'orphans_cleaned':
       return `נוקו ${e.count} הסמכות לפריטים שנמחקו`
     case 'migrated_to_teams':
