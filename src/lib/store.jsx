@@ -584,6 +584,18 @@ export function StoreProvider({ children }) {
         await log({ type: 'lead_added', name })
       },
 
+      /* The lock switch. Mentor-only at the rules level too, so an unlocked
+         ראש"צ can never open editing for themselves or anyone else. */
+      async setLeadEdit(uid, canEdit, name) {
+        await setDoc(doc(db, 'leads', uid), { canEdit }, { merge: true })
+        await log({ type: canEdit ? 'lead_unlocked' : 'lead_locked', name })
+      },
+
+      async revokeLead(uid, name) {
+        await deleteDoc(doc(db, 'leads', uid))
+        await log({ type: 'lead_removed', name })
+      },
+
       async approveMentor(uid, name) {
         await setDoc(doc(db, 'mentors', uid), { name, addedBy: user?.displayName ?? '—', at: stamp() })
         await deleteDoc(doc(db, 'mentorRequests', uid)).catch(() => {})
