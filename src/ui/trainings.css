@@ -1,0 +1,104 @@
+/* Trainings — only what the NeatSystem kit doesn't have (nodes, the deck,
+   the ladder). Uses the kit's tokens, so light/dark follow NeatSystem.
+   NeatSystem scopes this file to [data-sys="<folder>"] at build time. */
+
+.linkish { border: 0; background: none; padding: 0; color: var(--brand-text); font: inherit; cursor: pointer; }
+.linkish:hover { text-decoration: underline; }
+.notice { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; background: var(--brand-subtle); color: var(--brand-text); border-radius: var(--r-md); padding: 10px 14px; margin-top: 12px; }
+.notice.warn { background: color-mix(in srgb, var(--warning) 18%, transparent); color: var(--warning-text); }
+.ghead2 { display: flex; align-items: center; gap: 8px; margin: 8px 0; }
+.swatch { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
+.selchip { display: inline-flex; align-items: center; gap: 4px; height: 28px; padding: 0 4px 0 10px; border-radius: var(--r-full); background: var(--brand-subtle); color: var(--brand-text); font-size: 13px; font-weight: 500; }
+.selchip button { border: 0; background: none; color: inherit; width: 24px; height: 24px; cursor: pointer; border-radius: 50%; font-size: 16px; }
+.ruleshead { width: 100%; border: 0; background: none; cursor: pointer; text-align: start; padding: 0; }
+.tprog { height: 6px; border-radius: var(--r-full); background: var(--progress-track); overflow: hidden; margin: 8px 0 4px; }
+.tprog i { display: block; height: 100%; background: var(--brand); border-radius: var(--r-full); transition: width var(--dur-slow) var(--ease-out); }
+.tprog.warn { background: color-mix(in srgb, var(--warning) 25%, transparent); }
+.treading { max-width: 760px; }
+
+/* my rank, at the top of "שלי" */
+.rankstrip { display: flex; align-items: center; gap: 14px; width: 100%; background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--r-lg); padding: 14px 16px; cursor: pointer; font: inherit; color: inherit; }
+.rankstrip:hover { background: var(--bg-subtle); }
+
+/* roster */
+.rgrid { display: grid; gap: 8px; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+.rcard { display: flex; align-items: center; gap: 12px; background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--r-lg); padding: 10px 12px; cursor: pointer; font: inherit; color: inherit; }
+.rcard:hover { border-color: var(--brand); }
+
+/* the map */
+.graph { overflow: auto; background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--r-lg); padding: 8px 0 24px; max-height: calc(100dvh - 240px); }
+.nodewrap { display: flex; flex-direction: column; align-items: center; gap: 6px; border: 0; background: none; padding: 0; cursor: pointer; font: inherit; color: inherit; }
+.node { border-radius: 50%; display: grid; place-items: center; position: relative; flex: none; --edge: var(--p1); background: var(--p0); color: var(--p1); box-shadow: inset 0 -3px 0 color-mix(in srgb, var(--edge) 45%, transparent); transition: transform var(--dur-fast); }
+.nodewrap:hover .node { transform: translateY(-2px); }
+.node.locked { background: var(--n-200); color: var(--n-500); --edge: var(--n-300); }
+.node.open { box-shadow: inset 0 -3px 0 color-mix(in srgb, var(--edge) 45%, transparent), 0 0 0 4px color-mix(in srgb, var(--p0) 70%, transparent); }
+:root[data-theme="dark"] .node:not(.locked) { background: color-mix(in srgb, var(--p1) 35%, var(--bg-surface)); color: var(--p0); }
+:root[data-theme="dark"] .node.locked { background: var(--n-800); color: var(--n-400); }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .node:not(.locked) { background: color-mix(in srgb, var(--p1) 35%, var(--bg-surface)); color: var(--p0); }
+  :root:not([data-theme="light"]) .node.locked { background: var(--n-800); color: var(--n-400); }
+}
+.nbadge { position: absolute; bottom: -2px; inset-inline-start: -2px; width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; color: #fff; background: var(--success); border: 2px solid var(--bg-surface); }
+.nbadge.early { background: var(--reward); }
+.nlabel { text-align: center; max-width: 96px; font-size: 13px; line-height: 16px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; color: var(--text); }
+.atleast { position: absolute; top: -18px; left: 50%; transform: translateX(-50%); white-space: nowrap; background: var(--bg-subtle); border: 1px solid var(--border); border-radius: var(--r-full); font-size: 11px; padding: 0 7px; line-height: 18px; color: var(--text-secondary); }
+
+/* held items as columns (list view) */
+.tpgrid { display: grid; gap: 16px; }
+@media (min-width: 900px) { .tpgrid { grid-template-columns: 320px 1fr; align-items: start; } }
+.tcols { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); }
+.tcol { background: color-mix(in srgb, var(--hdr) 7%, var(--bg-surface)); border: 1px solid color-mix(in srgb, var(--hdr) 18%, var(--border)); border-radius: var(--r-lg); padding: 10px; scroll-margin-top: 120px; }
+.tcol h3 { margin: 0 0 10px; background: var(--hdr); color: #fff; border-radius: var(--r-full); text-align: center; font-size: 12px; font-weight: 700; letter-spacing: 0.04em; padding: 6px 8px; }
+.tlist { display: flex; flex-direction: column; gap: 6px; }
+.tchip { display: flex; align-items: center; gap: 6px; min-height: 38px; padding: 0 8px; background: var(--bg-surface); border: 1px solid var(--border); border-radius: 10px; font-size: 14px; font-weight: 500; }
+.tchip .nm { flex: 1; text-align: start; }
+.tchip.ghost { border-style: dashed; background: none; color: var(--text-muted); cursor: pointer; font: inherit; font-size: 14px; }
+.tchip.ghost:hover { border-color: var(--brand); color: var(--brand-text); }
+.tchip .tx { border: 0; background: none; color: var(--text-muted); cursor: pointer; display: grid; place-items: center; padding: 2px; border-radius: 6px; }
+.tchip .tx:hover { color: var(--danger); background: var(--danger-tint); }
+.teach { border: 0; background: none; padding: 2px; border-radius: 6px; cursor: pointer; display: grid; place-items: center; }
+.teach img { width: 22px; height: 22px; object-fit: contain; opacity: 0.2; filter: grayscale(1); }
+.teach.on img { opacity: 1; filter: none; }
+.teach[disabled] { cursor: default; }
+
+/* log */
+.ldot { width: 8px; height: 8px; border-radius: 50%; flex: none; background: var(--success); }
+.ldot.danger { background: var(--danger); } .ldot.warning { background: var(--warning); } .ldot.brand { background: var(--brand); }
+.lrow.isnote { background: var(--brand-subtle); border-radius: var(--r-sm); }
+
+/* the ladder */
+.ladder { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
+.tier { background: var(--bg-surface); border: 1px solid var(--border); border-top: 4px solid var(--rc); border-radius: var(--r-lg); padding: 12px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.tier.locked { opacity: 0.55; }
+.tier.reached { box-shadow: 0 0 0 2px color-mix(in srgb, var(--rc) 60%, transparent); }
+.tier .gate { min-height: 16px; color: var(--text-secondary); }
+.tier .twm { height: 30px; max-width: 100%; object-fit: contain; }
+.tier .tbadge { width: 84px; height: 84px; object-fit: contain; }
+.treqs { display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; }
+.rchip { font-size: 12px; font-weight: 500; padding: 3px 8px; border-radius: var(--r-full); background: var(--bg-subtle); }
+.rchip.miss { background: none; border: 1px dashed var(--border-strong); color: var(--text-muted); }
+
+/* the deck card: the original slide's geometry, in the system's surfaces */
+.deckbox { position: relative; overflow: hidden; border-radius: var(--r-xl); }
+.deck { position: absolute; top: 0; left: 0; transform-origin: top left; background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--r-xl); font-size: 18px; box-shadow: var(--shadow-sm); }
+.dk-logo { position: absolute; top: 22px; right: 36px; width: 64px; height: 64px; object-fit: contain; }
+.dk-title { position: absolute; top: 34px; right: 116px; font-size: 34px; font-weight: 700; }
+.dk-col { position: absolute; top: 109px; height: 664px; border-radius: 18px; background: color-mix(in srgb, var(--hdr) 8%, var(--bg-surface)); border: 1px solid color-mix(in srgb, var(--hdr) 16%, var(--border)); }
+.dk-head { position: absolute; top: 16px; left: 12px; right: 12px; height: 38px; border-radius: var(--r-full); background: var(--hdr); color: #fff; font-weight: 700; display: grid; place-items: center; letter-spacing: 0.04em; }
+.dk-chip { position: absolute; left: 10px; right: 10px; border-radius: 10px; background: var(--bg-surface); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-weight: 500; padding: 0 8px 0 30px; text-align: center; line-height: 1.1; }
+.dk-chip.ghost { border-style: dashed; background: none; color: var(--text-muted); }
+.dk-chip.edit { cursor: pointer; } .dk-chip.edit:hover { border-color: var(--brand); }
+.dk-chip .teach { position: absolute; left: 4px; top: 50%; transform: translateY(-50%); }
+.dk-card { position: absolute; top: 108px; right: 42px; width: 432px; height: 347px; border-radius: 20px; background: var(--bg-raised); border: 1px solid var(--border); box-shadow: var(--shadow-lg); padding: 26px 28px; }
+.dk-name { font-size: 36px; font-weight: 700; line-height: 1.1; max-width: 230px; }
+.dk-role { color: var(--text-secondary); font-size: 20px; margin-top: 6px; }
+.dk-wm { position: absolute; top: 24px; left: 26px; width: 150px; height: 42px; object-fit: contain; }
+.dk-badge { position: absolute; top: 66px; left: 52px; width: 100px; height: 100px; object-fit: contain; }
+.dk-div { position: absolute; top: 160px; right: 28px; left: 180px; height: 1px; background: var(--border); }
+.dk-f { position: relative; top: 70px; display: flex; align-items: center; gap: 10px; font-size: 20px; margin-bottom: 14px; }
+.dk-f b { font-weight: 500; color: var(--text-secondary); }
+.dk-log { position: absolute; top: 480px; right: 64px; width: 386px; height: 302px; border-radius: 18px; background: var(--bg-subtle); padding: 16px 18px; overflow: hidden; font-size: 16px; }
+.dk-lr { display: flex; gap: 10px; padding: 5px 0; border-bottom: 1px solid var(--border); }
+.dk-lr time { color: var(--text-muted); flex: none; font-variant-numeric: tabular-nums; }
+.dk-note { position: absolute; bottom: 12px; left: 16px; right: 16px; }
+.dk-note .input { min-height: 40px; font-size: 15px; }
