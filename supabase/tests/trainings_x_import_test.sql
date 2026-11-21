@@ -33,6 +33,9 @@ select t.eq((select count(*) from trainings.legacy_people where name = 'מישה
 select t.eq((select count(*) from trainings.certs c join trainings.legacy_people l on l.id = c.user_id where l.name = 'מישהו חדש'), 2::bigint, 'legacy person holds their records');
 select t.eq((select count(*) from trainings.locks where user_id = t.tid('lead2') and category = 'build'), 1::bigint, 'locked lead stays locked');
 select t.eq((select by_name from trainings.events where source_key = 'fs:e1'), 'מנטור ישן', 'who did it is kept by name');
+select t.eq(trainings.is_member(md5('fs:p2')::uuid, 'build'), true, 'a legacy person is an active member where they hold items');
+select t.eq(trainings.is_member(md5('fs:p2')::uuid, 'x3d'), true, '…in special categories too');
+select t.eq(trainings.grade_of((select pos from trainings.person(md5('fs:p2')::uuid)), null), 12, 'unknown grade does not block ranks');
 
 set role authenticated;
 select t.login(t.tid('a'));

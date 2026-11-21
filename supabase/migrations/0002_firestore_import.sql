@@ -28,6 +28,35 @@ alter table trainings.events add column if not exists by_name text;      -- who 
 alter table trainings.events add column if not exists source_key text;   -- 'fs:<event id>' for imported events
 create unique index if not exists events_source_idx on trainings.events (source_key);
 
+-- Until linked, a legacy person is a regular active member of the categories they
+-- were in (an 'extra' membership): they show in the team, can be certified and
+-- climb ranks. Their grade is unknown, so it doesn't block a rank (counts as יב').
+create or replace function trainings.person(p_uid uuid)
+returns table (id uuid, full_name text, team text, pos text, is_admin boolean, status text, grad_year int)
+language sql stable security definer set search_path = '' as $$
+  select p.id, p.full_name, p.team, p.position::text, p.is_admin, p.status::text, p.grad_year from hub.people p where p.id = p_uid
+  union all
+  select l.id, l.name, null, 'legacy', false, 'active', null from trainings.legacy_people l where l.id = p_uid and l.claimed_by is null
+$$;
+
+create or replace function trainings.grade_of(p_pos text, p_grad int) returns int
+language sql stable as $$
+  select case when p_pos = 'mentor' then 99 when p_pos = 'legacy' then 12 when p_grad is null then 0 else
+    greatest(0, 12 - (p_grad - (extract(year from now())::int + case when extract(month from now()) >= 9 then 1 else 0 end))) end
+$$;
+
+-- legacy people join every category they hold something in (unless paused there)
+create or replace function trainings.legacy_memberships() returns void
+language sql security definer set search_path = '' as $$
+  insert into trainings.memberships (user_id, category, kind, active)
+  select distinct l.id, x.category, 'extra', true
+  from trainings.legacy_people l
+  join (select c.user_id, i.category from trainings.certs c join trainings.items i on i.id = c.item
+        union select r.user_id, r.category from trainings.rank_current r) x on x.user_id = l.id
+  where l.claimed_by is null
+  on conflict (user_id, category) do nothing
+$$;
+
 -- state(): + unclaimed legacy people, + by_name on events
 create or replace function trainings_api.state() returns jsonb
 language plpgsql stable security definer set search_path = '' as $$
@@ -177,6 +206,15 @@ begin
   join trainings.categories c on c.kind = 'team' and c.team = hp.team
   on conflict do nothing;
 
+  -- legacy people: members where StudentTracker had them (also with no records yet)
+  insert into trainings.memberships (user_id, category, kind, active)
+  select ip.uid, x.category, 'extra', true
+  from jsonb_to_recordset(coalesce(p -> 'member_of', '[]')) as x(fs_id text, category text)
+  join imp_people ip on ip.fs_id = x.fs_id and ip.matched is null
+  where exists (select 1 from trainings.categories c where c.id = x.category)
+  on conflict (user_id, category) do nothing;
+  perform trainings.legacy_memberships();
+
   insert into trainings.events (type, text) values ('imported_firestore', left((v_out - 'not_matched')::text, 1000));
   return v_out;
 end $$;
@@ -213,6 +251,9 @@ begin
   insert into trainings.events (type, user_id, text) values ('legacy_linked', p_user, l.name);
   return l.name || ' שויך/ה';
 end $$;
+
+-- for data imported before this existed
+select trainings.legacy_memberships();
 
 revoke all on all tables in schema trainings from public, anon, authenticated;
 revoke all on all functions in schema trainings from public, anon, authenticated;   -- import_firestore / link_legacy: SQL editor only

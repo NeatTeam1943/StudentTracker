@@ -25,9 +25,9 @@ const by = (k) => (a, b) => (a[k] ?? 0) - (b[k] ?? 0)
 const key = (u, x) => `${u}|${x}`
 
 export function buildModel(S, hostPeople, meId) {
-  // people imported from StudentTracker who haven't joined NeatSystem yet keep
-  // their records under a placeholder until a mentor links them (trainings.link_legacy)
-  const legacy = (S.legacy ?? []).map((l) => ({ id: l.id, full_name: l.name, status: 'legacy', position: 'member', team: null, grad_year: null, is_admin: false, legacy: true }))
+  // people imported from StudentTracker who haven't joined NeatSystem yet: regular
+  // active members (same as trainings.person() in SQL) until a mentor links them (trainings.link_legacy)
+  const legacy = (S.legacy ?? []).map((l) => ({ id: l.id, full_name: l.name, status: 'active', position: 'member', team: null, grad_year: null, is_admin: false, legacy: true }))
   const people = [...hostPeople, ...legacy]
   const P = new Map(people.map((p) => [p.id, p]))
   const cats = [...S.categories].sort((a, b) => a.sort - b.sort || a.name.localeCompare(b.name, 'he'))
@@ -50,7 +50,7 @@ export function buildModel(S, hostPeople, meId) {
   const isMentor = (u) => u?.position === 'mentor'
   const isActive = (u) => u?.status === 'active'
   const nameOf = (id) => P.get(id)?.full_name ?? 'לא ידוע'
-  const grade = (u) => (isMentor(u) ? 99 : gradeOf(u?.grad_year ?? null) ?? (u?.grad_year ? 13 : 0))
+  const grade = (u) => (isMentor(u) ? 99 : u?.legacy ? 12 : gradeOf(u?.grad_year ?? null) ?? (u?.grad_year ? 13 : 0))
   const gradeLabel = (u) => (isMentor(u) ? 'מנטור/ית' : GRADE_HE[gradeOf(u?.grad_year ?? null)] ?? (u?.grad_year ? 'בוגר/ת' : ''))
   const me = P.get(meId) ?? null
 

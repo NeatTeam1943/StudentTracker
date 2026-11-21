@@ -87,7 +87,7 @@ export function buildImport(fs, hubTeams = HUB_TEAMS) {
   const cat = (teamId) => catOf.get(teamId) ?? (teamId ? slugId(teamId) : null)
 
   const people = (fs.people ?? []).map((p) => ({ fs_id: p.id, name: p.name ?? p.id, phone: p.phone ?? '' }))
-  const certs = [], current = [], favorites = [], paused = []
+  const certs = [], current = [], favorites = [], paused = [], memberOf = []
   for (const p of fs.people ?? []) {
     // very old records: a flat `tools` map before teams existed = בנייה
     const ms = p.memberships ?? (p.tools ? { build: { items: p.tools, rankId: p.rankId ?? null, active: true } } : {})
@@ -102,6 +102,7 @@ export function buildImport(fs, hubTeams = HUB_TEAMS) {
       const fav = m?.favorite ?? (teamId === 'build' ? p.favoriteTool : null)
       if (fav) favorites.push({ fs_id: p.id, category: c, text: String(fav).slice(0, 40) })
       if (m?.active === false) paused.push({ fs_id: p.id, category: c })
+      else memberOf.push({ fs_id: p.id, category: c })
     }
   }
   const events = []
@@ -114,7 +115,7 @@ export function buildImport(fs, hubTeams = HUB_TEAMS) {
   // a lead whose editing was locked in StudentTracker stays locked in their team (matched by name in SQL)
   const leads = (fs.leads ?? []).filter((l) => l.canEdit === false && l.name).map((l) => ({ name: l.name }))
   return {
-    payload: { categories: categories.map(({ items: _i, ...c }) => c), items, rules, people, certs, current, favorites, paused, events, locked_leads: leads },
+    payload: { categories: categories.map(({ items: _i, ...c }) => c), items, rules, people, certs, current, favorites, paused, member_of: memberOf, events, locked_leads: leads },
     counts: { people: people.length, categories: categories.length, items: items.length, certs: certs.length, events: events.length },
   }
 }
