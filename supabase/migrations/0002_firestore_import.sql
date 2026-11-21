@@ -119,7 +119,7 @@ begin
   insert into trainings.items (id, category, name, column_id, sort)
   select trainings.item_id(x.category, x.name), x.category, x.name, x."column", coalesce(x.sort, 0)
   from jsonb_to_recordset(coalesce(p -> 'items', '[]')) as x(category text, name text, "column" text, sort int)
-  where exists (select 1 from trainings.categories c where c.id = x.category)
+  where exists (select 1 from trainings.categories c where c.id = x.category) and char_length(btrim(x.name)) between 1 and 60
   on conflict (id) do update set column_id = excluded.column_id, sort = excluded.sort;
   get diagnostics n = row_count; v_out := v_out || jsonb_build_object('items', n);
 
@@ -163,7 +163,7 @@ begin
   insert into trainings.events (at, type, user_id, category, item, text, by_name, source_key)
   select coalesce(x."at", now()), x.type, ip.uid, x.category,
          case when x.rank is not null then x.rank when x.item is not null then trainings.item_id(x.category, x.item) end,
-         x.text, x.by_name, 'fs:' || x.key
+         left(x.text, 1000), x.by_name, 'fs:' || x.key
   from jsonb_to_recordset(coalesce(p -> 'events', '[]')) as x(key text, fs_id text, category text, type text, item text, rank text, text text, "at" timestamptz, by_name text)
   left join imp_people ip on ip.fs_id = x.fs_id
   where x.key is not null
@@ -177,7 +177,7 @@ begin
   join trainings.categories c on c.kind = 'team' and c.team = hp.team
   on conflict do nothing;
 
-  insert into trainings.events (type, text) values ('imported_firestore', v_out::text);
+  insert into trainings.events (type, text) values ('imported_firestore', left((v_out - 'not_matched')::text, 1000));
   return v_out;
 end $$;
 

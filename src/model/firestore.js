@@ -48,6 +48,7 @@ const EVENT = {
   promoted: 'promoted', rank_set: 'rank_set', rank_auto: 'rank_auto', auto_rank_on: 'auto_rank_on',
   team_joined: 'joined', team_transferred: 'joined', team_deactivated: 'deactivated', team_reactivated: 'reactivated',
 }
+const itemName = (s) => String(s ?? '').trim().slice(0, 60) // trainings.items.name: 1..60
 const norm = (s) => String(s ?? '').normalize('NFKC').replace(/["'״׳`]/g, '').replace(/\s+/g, ' ').trim().toLowerCase()
 export function slugId(s) {
   let x = String(s ?? '').toLowerCase().replace(/[^a-z0-9_]/g, '_').replace(/_+/g, '_').replace(/^_+|_+$/g, '')
@@ -73,14 +74,14 @@ export function buildImport(fs, hubTeams = HUB_TEAMS) {
     const order = (t.order?.length ? t.order : Object.keys(t.categories ?? {})).filter((k) => t.categories?.[k])
     const columns = order.map((k) => ({ id: slugId(k), he: t.categories[k].he ?? k, label: t.categories[k].label ?? t.categories[k].he ?? k, header: t.categories[k].header ?? '#6D6D6D' }))
     let n = 0
-    for (const k of order) for (const name of t.categories[k].items ?? []) items.push({ category: id, name, column: slugId(k), sort: n++ })
+    for (const k of order) for (const name of (t.categories[k].items ?? []).map(itemName).filter(Boolean)) items.push({ category: id, name, column: slugId(k), sort: n++ })
     categories.push({
-      id, name: team?.name ?? t.name ?? id, kind: team ? 'team' : 'special', team: team?.id ?? null, sort: Number(t.sort ?? 50),
+      id, name: String(team?.name ?? t.name ?? id).trim().slice(0, 40) || id, kind: team ? 'team' : 'special', team: team?.id ?? null, sort: Number(t.sort ?? 50),
       item_noun: t.itemNoun ?? 'הכשרות', item_noun_singular: t.itemNounSingular ?? 'הכשרה', favorite_label: t.favoriteLabel ?? 'דבר אהוב',
       columns: columns.length ? columns : [{ id: 's0', he: 'שלב א׳', label: 'שלב א׳', header: '#6D6D6D' }], items: n,
     })
     for (const [rank, req] of Object.entries(t.requirements ?? {})) {
-      rules.push({ category: id, rank, items: req?.items ?? [], min_grade: req?.minGrade === undefined ? RANK_GATE[rank] ?? null : req.minGrade })
+      rules.push({ category: id, rank, items: (req?.items ?? []).map(itemName), min_grade: req?.minGrade === undefined ? RANK_GATE[rank] ?? null : req.minGrade })
     }
   }
   const cat = (teamId) => catOf.get(teamId) ?? (teamId ? slugId(teamId) : null)
@@ -95,7 +96,7 @@ export function buildImport(fs, hubTeams = HUB_TEAMS) {
       if (!c) continue
       for (const [name, r] of Object.entries(m?.items ?? {})) {
         const rec = r && typeof r === 'object' ? r : { canTeach: !!r }
-        certs.push({ fs_id: p.id, category: c, item: name, at: rec.at ?? null, by_name: rec.by ?? null, teach: !!rec.canTeach, teach_at: rec.teachAt ?? null })
+        certs.push({ fs_id: p.id, category: c, item: itemName(name), at: rec.at ?? null, by_name: rec.by ?? null, teach: !!rec.canTeach, teach_at: rec.teachAt ?? null })
       }
       if (m?.rankId || m?.autoRank === false) current.push({ fs_id: p.id, category: c, rank: m.rankId ?? null, manual: m.autoRank === false })
       const fav = m?.favorite ?? (teamId === 'build' ? p.favoriteTool : null)
@@ -108,7 +109,7 @@ export function buildImport(fs, hubTeams = HUB_TEAMS) {
     const type = EVENT[e.type]
     if (!type || (!e.personId && type !== 'note')) continue
     const rank = type === 'promoted' || type === 'rank_set' || type === 'rank_auto' ? e.to ?? null : null
-    events.push({ key: e.id, fs_id: e.personId ?? null, category: cat(e.teamId), type, item: rank ? null : e.tool ?? null, rank, text: type === 'note' ? e.text ?? '' : rank ? e.from ?? null : null, at: e.at ?? null, by_name: e.by ?? null })
+    events.push({ key: e.id, fs_id: e.personId ?? null, category: cat(e.teamId), type, item: rank || !e.tool ? null : itemName(e.tool), rank, text: type === 'note' ? e.text ?? '' : rank ? e.from ?? null : null, at: e.at ?? null, by_name: e.by ?? null })
   }
   // a lead whose editing was locked in StudentTracker stays locked in their team (matched by name in SQL)
   const leads = (fs.leads ?? []).filter((l) => l.canEdit === false && l.name).map((l) => ({ name: l.name }))
