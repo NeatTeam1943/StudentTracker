@@ -27,7 +27,6 @@ function Items() {
   return (
     <div className="stack">
       <Chips label="קטגוריה" value={cat} onChange={(x) => { setCat(x); setDraft({ column: '', name: '', after: '' }) }} items={cats.map((x) => ({ id: x.id, label: x.name }))} />
-      <div className="c2">שינוי כאן משפיע על הכרטיסים, המפה וסולם הדרגות של {c.name}.</div>
       <Card className="b" title={`הוספת ${c.item_noun_singular}`}>
         <form className="row wrap" onSubmit={async (e) => { e.preventDefault(); if (await act('add_item', { p_cat: cat, p_column: col, p_name: draft.name, p_after: draft.after || null }, 'נוסף')) setDraft({ ...draft, name: '' }) }}>
           <Select style={{ maxWidth: 180 }} value={col} onChange={(e) => setDraft({ ...draft, column: e.target.value })} aria-label="עמודה">{cols.map((x) => <option key={x.id} value={x.id}>{x.he}</option>)}</Select>
@@ -78,7 +77,6 @@ function Categories() {
   const missingTeams = host.teams.filter((t) => t.kind === 'team' && !M.teamCategory(t.id))
   return (
     <div className="stack">
-      <div className="c2">לכל קטגוריה (צוות או הסמכה מיוחדת) עמודות, פריטים וסולם משלה. הדרגות עצמן משותפות לכולם.</div>
       {c ? <>
         <Chips label="קטגוריה" value={cat} onChange={setCat} items={cats.map((x) => ({ id: x.id, label: x.name }))} />
         <Card className="b" title={`${c.name} — הגדרות`}>
@@ -109,7 +107,6 @@ function Categories() {
       </> : <Empty icon={Columns3} title="אין קטגוריות שאת/ה עורך/ת" />}
       {M.canManage() && (
         <Card className="b" title="קטגוריה חדשה">
-          <div className="foot c2" style={{ marginBottom: 8 }}>הסמכה מיוחדת (כמו CNC) לא שייכת לצוות, ומקבלים אליה גישה לפי רשימה. אפשר גם לפתוח קטגוריה לצוות ב-NeatSystem שעוד אין לו.</div>
           <div className="row wrap">
             <Input style={{ maxWidth: 220 }} value={name} onChange={(e) => setName(e.target.value)} placeholder="שם" />
             <Select style={{ maxWidth: 220 }} value={team} onChange={(e) => setTeam(e.target.value)} aria-label="סוג">
@@ -141,7 +138,6 @@ function Rules() {
   }
   return (
     <div className="stack">
-      <div className="c2">כל דרגה דורשת את הפריטים שלה ואת כל מה שמתחתיה, ואולי שכבה מינימלית. שינוי מחשב מחדש את כל מי שבמצב אוטומטי — דרגות יכולות גם לרדת.</div>
       <Chips label="קטגוריה" value={cat} onChange={setCat} items={cats.map((c) => ({ id: c.id, label: c.name }))} />
       {unassigned > 0 && <div className="foot" style={{ color: 'var(--warning-text)' }}>{unassigned} פריטים לא משויכים לאף דרגה</div>}
       {M.ranks().map((r) => {
@@ -190,10 +186,9 @@ function Approvers() {
   const [add, setAdd] = useState({})
   const [acc, setAcc] = useState({})
   const manage = M.canManage()
-  const pos = { team_lead: 'רש"צ', captain: 'קפטן/ית', member: 'חבר/ת צוות', rookie: 'רוקי' }
+  const pos = { team_lead: 'רש"צ', captain: 'קפטן/ית', member: 'חבר/ת צוות' }
   return (
     <div className="stack">
-      <div className="c2">מי מסמיך בכל קטגוריה. ברירת מחדל: הרש"צ של הצוות, קפטנים, אדמינים ומנטורים (לפי טבלת ההרשאות של NeatSystem). מנטור יכול למנות עוד אנשים ולנעול רש"צ — נעול רואה הכל ולא משנה כלום.</div>
       {M.categories().map((c) => (
         <Card className="b" key={c.id} title={c.name}>
           <div className="list">{M.approversOf(c.id).filter((x) => !M.isMentor(x) && !x.is_admin && x.position !== 'captain').map((x) => {

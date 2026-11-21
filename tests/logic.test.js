@@ -20,12 +20,13 @@ const S = {
   current: [{ user: 'a', category: 'build', rank: 'nit', manual: false }], events: [], perms: {},
 }
 
-test('membership: team, former, mentors are not members', () => {
+test('membership: team, former, mentors in every team', () => {
   const M = buildModel(S, people, 'a')
   assert.equal(M.membership('a', 'build').kind, 'team')
   assert.equal(M.membership('s', 'build').kind, 'former')
   assert.equal(M.isMember('s', 'build'), false)
-  assert.equal(M.membership('m', 'build'), null)
+  assert.equal(M.membership('m', 'build').kind, 'team', 'a mentor with no team belongs to every team category')
+  assert.equal(M.membership('m', 'cnc'), null)
   assert.equal(M.membership('a', 'cnc'), null)
 })
 

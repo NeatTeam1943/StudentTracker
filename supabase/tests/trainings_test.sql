@@ -18,7 +18,7 @@ insert into hub.profiles (id, email, full_name, position, status, team, grad_yea
   (t.tid('lead'),   'lead@tr.test',   'רש"צית בנייה', 'team_lead', 'active', 'build', 2027),
   (t.tid('lead2'),  'lead2@tr.test',  'רש"צ נעול', 'team_lead', 'active', 'build', 2027),
   (t.tid('a'),      'a@tr.test',      'חבר בנייה', 'member', 'active', 'build', 2028),
-  (t.tid('b'),      'b@tr.test',      'רוקי בנייה', 'rookie', 'active', 'build', 2030),
+  (t.tid('b'),      'b@tr.test',      'חדש בנייה', 'member', 'active', 'build', 2030),
   (t.tid('sw'),     'sw@tr.test',     'חברת תוכנה', 'member', 'active', 'software', 2028),
   (t.tid('cap'),    'cap@tr.test',    'קפטן תוכנה', 'captain', 'active', 'software', 2027),
   (t.tid('gone'),   'gone@tr.test',   'עזב', 'member', 'active', 'build', 2027)
@@ -76,6 +76,7 @@ reset role;
 select t.eq((select rank || '/' || manual from trainings.rank_current where user_id = t.tid('b') and category = 'build'), 'niter/true', 'manual rank is not overwritten');
 select t.eq(trainings.grade_of('member', 2030) between 7 and 10, true, 'grade from graduation year');
 select t.eq(trainings.grade_of('mentor', null), 99, 'mentors count as 99');
+select t.eq(trainings.is_member(t.tid('mentor'), 'build'), true, 'a mentor with no team belongs to every team category');
 set role authenticated;
 
 -- ---------- catalog ----------

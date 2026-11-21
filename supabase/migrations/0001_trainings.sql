@@ -189,7 +189,9 @@ from (values
 on conflict (category, rank) do nothing;
 
 -- -----------------------------------------------------------------------------
--- Permissions (added to NeatSystem's table; mentors change them in its matrix)
+-- Permissions: this system declares them (key, what it means, default roles)
+-- and checks them in its own functions; who holds them is set in NeatSystem's
+-- permissions page (ניהול → טבלת הרשאות).
 -- -----------------------------------------------------------------------------
 select hub.register_permissions('trainings', '[
   {"key": "trainings.certify_all",  "label": "הסמכה בכל קטגוריות ההכשרות", "grp": "הכשרות", "sort": 1, "roles": ["captain", "mentor", "admin"]},
@@ -215,7 +217,8 @@ language sql stable as $$
     greatest(0, 12 - (p_grad - (extract(year from now())::int + case when extract(month from now()) >= 9 then 1 else 0 end))) end
 $$;
 
--- (kind, active) of a person in a category, or no row. Mentors are not members.
+-- (kind, active) of a person in a category, or no row. A mentor belongs to
+-- their team's category, or to every team category when they have no team.
 create or replace function trainings.membership(p_uid uuid, p_cat text)
 returns table (kind text, active boolean)
 language plpgsql stable security definer set search_path = '' as $$
@@ -226,12 +229,12 @@ declare
 begin
   select * into c from trainings.categories where id = p_cat;
   select * into p from trainings.person(p_uid);
-  if c.id is null or p.id is null or p.pos = 'mentor' then return; end if;
+  if c.id is null or p.id is null then return; end if;
   select * into m from trainings.memberships where user_id = p_uid and category = p_cat;
   if m.kind = 'paused' or (m.kind is not null and not m.active) then
     kind := m.kind; active := false; return next; return;
   end if;
-  if c.kind = 'team' and p.team = c.team then kind := 'team'; active := p.status = 'active'; return next; return; end if;
+  if c.kind = 'team' and (p.team = c.team or (p.pos = 'mentor' and p.team is null)) then kind := 'team'; active := p.status = 'active'; return next; return; end if;
   if c.kind = 'special' and exists (select 1 from trainings.access a where a.category = p_cat and a.user_id = p_uid) then
     kind := 'special'; active := p.status = 'active'; return next; return;
   end if;
@@ -548,7 +551,6 @@ begin
   if not trainings.can_grant(auth.uid(), p_cat) then perform trainings.deny(); end if;
   if not hub.is_active(p_user) then raise exception 'המשתמש לא פעיל' using errcode = '22023'; end if;
   if trainings.is_member(p_user, p_cat) then return; end if;
-  if (select pos from trainings.person(p_user)) = 'mentor' then raise exception 'מנטורים לא חברים בקטגוריות' using errcode = '22023'; end if;
   insert into trainings.memberships (user_id, category, kind, active) values (p_user, p_cat, 'extra', true)
   on conflict (user_id, category) do update set kind = 'extra', active = true;
   perform trainings.log('joined', p_user, p_cat);

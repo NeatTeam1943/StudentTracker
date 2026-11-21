@@ -219,41 +219,75 @@ begin
   return v_out;
 end $$;
 
--- Someone from StudentTracker joined NeatSystem: their records become theirs.
+-- Everything one person has here, handed to another id (kept where the target already has the same thing).
+create or replace function trainings.move_person(p_from uuid, p_to uuid) returns void
+language plpgsql security definer set search_path = '' as $$
+begin
+  if p_from = p_to then return; end if;
+  insert into trainings.certs (user_id, item, at, by, teach, teach_at, early)
+  select p_to, item, at, by, teach, teach_at, early from trainings.certs where user_id = p_from on conflict do nothing;
+  delete from trainings.certs where user_id = p_from;
+  insert into trainings.memberships (user_id, category, kind, active, joined_at)
+  select p_to, category, kind, active, joined_at from trainings.memberships where user_id = p_from on conflict do nothing;
+  delete from trainings.memberships where user_id = p_from;
+  insert into trainings.favorites (user_id, category, text)
+  select p_to, category, text from trainings.favorites where user_id = p_from on conflict do nothing;
+  delete from trainings.favorites where user_id = p_from;
+  insert into trainings.rank_current (user_id, category, rank, manual)
+  select p_to, category, rank, manual from trainings.rank_current where user_id = p_from on conflict do nothing;
+  delete from trainings.rank_current where user_id = p_from;
+  insert into trainings.access (category, user_id) select category, p_to from trainings.access where user_id = p_from on conflict do nothing;
+  delete from trainings.access where user_id = p_from;
+  insert into trainings.approvers (category, user_id) select category, p_to from trainings.approvers where user_id = p_from on conflict do nothing;
+  delete from trainings.approvers where user_id = p_from;
+  insert into trainings.locks (category, user_id) select category, p_to from trainings.locks where user_id = p_from on conflict do nothing;
+  delete from trainings.locks where user_id = p_from;
+  update trainings.events set user_id = p_to where user_id = p_from;
+  update trainings.events set by = p_to where by = p_from;
+  update trainings.certs set by = p_to where by = p_from;
+end $$;
+
+-- NeatSystem: a profile made ahead of time was claimed by its person's login.
+create or replace function trainings.on_profile_claimed(p_old uuid, p_new uuid) returns void
+language plpgsql security definer set search_path = '' as $$
+begin
+  perform trainings.move_person(p_old, p_new);
+  update trainings.legacy_people set claimed_by = p_new where claimed_by = p_old;
+end $$;
+
+-- Someone from StudentTracker joined NeatSystem (or was added there ahead of time): their records become theirs.
 -- In the SQL editor:  select trainings.link_legacy('השם כמו ב-StudentTracker', 'their.neatsystem@gmail.com');
 create or replace function trainings.link_legacy(p_name text, p_email text) returns text
 language plpgsql set search_path = '' as $$
 declare
   l trainings.legacy_people;
-  p_legacy uuid;
   p_user uuid;
 begin
   select * into l from trainings.legacy_people where claimed_by is null and trainings.norm_name(name) = trainings.norm_name(p_name);
   if l.id is null then raise exception 'אין חבר/ה מ-StudentTracker שעוד לא שויך/ה בשם %', p_name; end if;
-  select id into p_user from hub.profiles where lower(email) = lower(btrim(p_email));
+  select id into p_user from hub.profiles where lower(email) = lower(btrim(p_email)) and status = 'active';
   if p_user is null then raise exception 'אין משתמש ב-NeatSystem עם המייל %', p_email; end if;
-  p_legacy := l.id;
-
-  insert into trainings.certs (user_id, item, at, by, teach, teach_at, early)
-  select p_user, item, at, by, teach, teach_at, early from trainings.certs where user_id = p_legacy on conflict do nothing;
-  delete from trainings.certs where user_id = p_legacy;
-  insert into trainings.memberships (user_id, category, kind, active, joined_at)
-  select p_user, category, kind, active, joined_at from trainings.memberships where user_id = p_legacy on conflict do nothing;
-  delete from trainings.memberships where user_id = p_legacy;
-  insert into trainings.favorites (user_id, category, text)
-  select p_user, category, text from trainings.favorites where user_id = p_legacy on conflict do nothing;
-  delete from trainings.favorites where user_id = p_legacy;
-  insert into trainings.rank_current (user_id, category, rank, manual)
-  select p_user, category, rank, manual from trainings.rank_current where user_id = p_legacy on conflict do nothing;
-  delete from trainings.rank_current where user_id = p_legacy;
-  update trainings.events set user_id = p_user where user_id = p_legacy;
-  update trainings.legacy_people set claimed_by = p_user, claimed_at = now() where id = p_legacy;
+  perform trainings.move_person(l.id, p_user);
+  update trainings.legacy_people set claimed_by = p_user, claimed_at = now() where id = l.id;
   insert into trainings.events (type, user_id, text) values ('legacy_linked', p_user, l.name);
   return l.name || ' שויך/ה';
 end $$;
 
--- for data imported before this existed
-select trainings.legacy_memberships();
+-- the tab's "שיוך" button: a mentor links a legacy person to a NeatSystem member
+create or replace function trainings_api.link_legacy(p_legacy uuid, p_user uuid) returns void
+language plpgsql security definer set search_path = '' as $$
+declare
+  l trainings.legacy_people;
+begin
+  perform trainings.require_active();
+  if not hub.has_perm('trainings.manage') then perform trainings.deny('רק מנטור משייך'); end if;
+  select * into l from trainings.legacy_people where id = p_legacy and claimed_by is null;
+  if l.id is null then raise exception 'כבר שויך/ה' using errcode = 'P0002'; end if;
+  if not hub.is_active(p_user) then raise exception 'המשתמש לא פעיל' using errcode = '22023'; end if;
+  perform trainings.move_person(l.id, p_user);
+  update trainings.legacy_people set claimed_by = p_user, claimed_at = now() where id = l.id;
+  perform trainings.log('legacy_linked', p_user, null, null, l.name);
+end $$;
 
 revoke all on all tables in schema trainings from public, anon, authenticated;
 revoke all on all functions in schema trainings from public, anon, authenticated;   -- import_firestore / link_legacy: SQL editor only

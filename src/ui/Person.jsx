@@ -149,7 +149,6 @@ function RankAdmin({ uid, catId }) {
           {M.ranks().filter((r) => r.id !== 'nitmentor').map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
         </Select>
       </div>
-      <div className="foot cm" style={{ marginTop: 6 }}>{manual ? 'דרגה שנקבעה ידנית. היא לא תשתנה עם ההסמכות עד שתחזירו לאוטומטי — ואז תופיע הצעה לקידום כשיעמוד/תעמוד בדרישות.' : 'הדרגה מתעדכנת לבד לפי ההסמכות. עברו ל"ידני" כדי לקבוע חריג.'}</div>
     </div>
   )
 }
@@ -168,12 +167,25 @@ export function PersonPage() {
   const [note, setNote] = useState('')
   const [clear, setClear] = useState(false)
   const [joinTo, setJoinTo] = useState('')
+  const [linkTo, setLinkTo] = useState('')
   if (!u) return <div className="page"><PageHead title="לא נמצא" back={{ fallback: to('/'), label: 'הכשרות' }} /><Empty icon={Shield} title="אין כאן אף אחד">ייתכן שהחשבון בארכיון או שאין לך הרשאה לראות אותו.</Empty></div>
   const c = catId && M.category(catId), mem = c && M.membership(id, catId), can = c && M.canGrant(me, catId) && me.id !== id
   return (
     <div className="page">
       <PageHead title={u.full_name} back={{ fallback: to(`/?cat=${catId ?? ''}&view=roster`), label: 'הכשרות' }}
-        sub={<>{c?.name ?? 'ללא קטגוריה'} · {roleLine(M, u)} · <Link to={`/people/${id}`}>לפרופיל המלא</Link></>} />
+        sub={<>{c?.name ?? 'ללא קטגוריה'} · {roleLine(M, u)}{!u.legacy && <> · <Link to={`/people/${id}`}>לפרופיל המלא</Link></>}</>} />
+      {u.legacy && (
+        <div className="notice info" style={{ marginBottom: 12 }}>
+          <span className="grow">מ-StudentTracker, עוד לא משויך/ת ל-NeatSystem</span>
+          {M.canManage() && <>
+            <Select aria-label="שיוך ל" style={{ maxWidth: 220, minHeight: 36 }} value={linkTo} onChange={(e) => setLinkTo(e.target.value)}>
+              <option value="">שיוך ל…</option>
+              {M.people().filter((p) => p.status === 'active').map((p) => <option key={p.id} value={p.id}>{p.full_name}</option>)}
+            </Select>
+            <Button size="sm" variant="primary" disabled={!linkTo} onClick={async () => { if (await act('link_legacy', { p_legacy: id, p_user: linkTo }, 'שויך/ה')) nav(to(`/p/${linkTo}`)) }}>שיוך</Button>
+          </>}
+        </div>
+      )}
       {cats.length > 1 && (
         <div className="chips" style={{ marginBottom: 12 }}>{cats.map((x) => {
           const r = M.rankIn(id, x.id), off = !M.isMember(id, x.id)
@@ -193,7 +205,7 @@ export function PersonPage() {
         <div className="row wrap" style={{ margin: '12px 0' }}>
           <Tabs label="תצוגה" value={view} onChange={setView} items={[{ id: 'deck', label: 'כרטיס' }, { id: 'list', label: 'רשימה' }]} />
           {can && mem.active && <Button size="sm" variant={edit ? 'primary' : 'tint'} icon={edit ? Check : Pencil} onClick={() => setEdit(!edit)}>{edit ? 'סיום עריכה' : 'עריכת הסמכות'}</Button>}
-          {edit && <span className="foot c2">לחיצה על פריט מסמיכה או מבטלת · <img src={brand.teach} alt="" width={14} style={{ verticalAlign: 'middle' }} /> = מלמד/ת אחרים · <Lock size={12} /> = לפני הדרישות</span>}
+          {edit && <span className="foot c2"><img src={brand.teach} alt="" width={14} style={{ verticalAlign: 'middle' }} /> = מלמד/ת אחרים · <Lock size={12} /> = לפני הדרישות</span>}
         </div>
         {view === 'deck' ? <Deck uid={id} catId={catId} edit={edit} /> : (
           <div className="tpgrid">
@@ -225,7 +237,7 @@ export function PersonPage() {
                   <Input id={fid} value={note} onChange={(e) => setNote(e.target.value)} placeholder="מה קרה, מה לזכור…" /><Button type="submit" variant="primary" disabled={!note.trim()}>הוספה</Button>
                 </form>
               )}</Field>
-              <Field label="קטגוריות נוספות" hint="החלפת צוות ראשי נעשית בפרופיל ב-NeatSystem — ההסמכות בצוות הקודם נשמרות והדרגה שם קופאת.">{(fid) => (
+              <Field label="קטגוריות נוספות">{(fid) => (
                 <div className="row wrap">
                   <Select id={fid} style={{ maxWidth: 220 }} value={joinTo} onChange={(e) => setJoinTo(e.target.value)}>
                     <option value="">בחירה…</option>

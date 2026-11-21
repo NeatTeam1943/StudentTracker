@@ -34,7 +34,7 @@ function Mine({ catId }) {
   return (
     <div className="stack">
       <Strip catId={catId} />
-      <Card title={<span className="row"><Sparkles size={18} aria-hidden />מה אפשר ללמוד עכשיו</span>} more={<span className="foot c2">ההסמכה ניתנת ע״י הרש״צ בסדנה</span>}>
+      <Card title={<span className="row"><Sparkles size={18} aria-hidden />מה אפשר ללמוד עכשיו</span>}>
         {next.length ? <div className="list">{next.map((i) => {
           const t = M.teachersOf(i.id).filter((x) => x.id !== me.id)
           return (
@@ -60,7 +60,6 @@ function Suggestions({ catId }) {
   if (!list.length) return null
   return (
     <Card title={<span className="row"><TrendingUp size={18} aria-hidden />מוכנים לקידום</span>}>
-      <div className="foot c2" style={{ marginTop: -6, marginBottom: 6 }}>אנשים בדרגה ידנית שעמדו בדרישות. שום דבר לא זז עד שמישהו לוחץ.</div>
       <div className="list">{list.map(([u, s]) => (
         <div key={u.id} className="lrow">
           <RankMark rank={s.to} size={32} />
@@ -72,7 +71,7 @@ function Suggestions({ catId }) {
   )
 }
 
-const GROUPS = [[12, "שכבה יב'"], [11, "שכבה יא'"], [10, "שכבה י'"], [9, "שכבה ט'"], [8, "שכבה ח'"], [7, "שכבה ז'"], [13, 'בוגרים פעילים'], [0, 'בלי שנתון']]
+const GROUPS = [[99, 'מנטורים'], [12, "שכבה יב'"], [11, "שכבה יא'"], [10, "שכבה י'"], [9, "שכבה ט'"], [8, "שכבה ח'"], [7, "שכבה ז'"], [13, 'בוגרים פעילים'], [0, 'בלי שנתון']]
 function Roster({ catId }) {
   const { M, me, act, to } = useTr()
   const nav = useNavigate()
@@ -96,11 +95,11 @@ function Roster({ catId }) {
       </button>
     )
   }
-  const g = (u) => { const x = M.grade(u); return x >= 7 && x <= 13 ? x : 0 }
+  const g = (u) => { if (M.isMentor(u)) return 99; if (u.legacy) return 0; const x = M.grade(u); return x >= 7 && x <= 13 ? x : 0 }
   const addable = M.people().filter((u) => u.status === 'active' && !M.isMentor(u) && !M.membership(u.id, catId))
   return (
     <div className="stack">
-      <div className="c2">{active.length} חברים · לחיצה על שם פותחת את כרטיס ההסמכות</div>
+      <div className="c2">{active.length} חברים</div>
       <Suggestions catId={catId} />
       {GROUPS.map(([k, title]) => {
         const list = active.filter((u) => g(u) === k).sort((a, b) => a.full_name.localeCompare(b.full_name, 'he'))
@@ -110,7 +109,7 @@ function Roster({ catId }) {
       {archive.length > 0 && (
         <section>
           <div className="ghead2"><span className="h3">ארכיון</span><span className="cap cm">{archive.length}</span><Button size="sm" variant="ghost" onClick={() => setArch(!arch)}>{arch ? 'הסתרה' : 'הצגה'}</Button></div>
-          {arch && <><div className="foot c2" style={{ marginBottom: 8 }}>עברו צוות, סומנו כלא פעילים או עזבו. ההסמכות והדרגה שלהם כאן נשמרו.</div><div className="rgrid">{archive.map(card)}</div></>}
+          {arch && <><div className="rgrid">{archive.map(card)}</div></>}
         </section>
       )}
       {M.canGrant(me, catId) && addable.length > 0 && (
@@ -196,7 +195,7 @@ function MapView({ catId }) {
         </Select>
         <span className="grow" /><span className="foot c2">רשימה</span><Switch label="רשימה" on={list} onChange={setList} />
       </div>
-      <div className="foot c2">{who ? `${M.heldIn(who, catId).length}/${items.length} מוסמך/ת · ` : ''}{canG ? 'רש"צ יכול להסמיך גם פריט נעול — ככה פותחים משהו מוקדם.' : 'את ההסמכה נותן הרש"צ בסדנה.'}</div>
+      {who && <div className="foot c2">{M.heldIn(who, catId).length}/{items.length} מוסמך/ת</div>}
       {list ? (
         <div className="card list" style={{ padding: 8 }}>{items.map((m) => (
           <button type="button" key={m.id} className="lrow click" style={{ paddingInlineStart: 8 + Math.min(6, M.levelOf(m)) * 16 }} onClick={() => setPick(m)}>
@@ -235,7 +234,7 @@ function Ladder({ catId }) {
   return (
     <div className="stack">
       <div className="row wrap">
-        <span className="c2">כל דרגה דורשת את שלה ואת כל מה שלפניה. הצגת ההתקדמות של</span>
+        <span className="c2">ההתקדמות של</span>
         <Select style={{ maxWidth: 240 }} value={who} onChange={(e) => setWho(e.target.value)} aria-label="של מי">
           <option value="">הסולם בלבד</option>
           {M.membersOf(catId).filter((u) => M.isMember(u.id, catId)).map((u) => <option key={u.id} value={u.id}>{u.full_name}</option>)}

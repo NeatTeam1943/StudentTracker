@@ -79,6 +79,6 @@ export function useGrant() {
   }
 }
 
-export const roleLine = (M, u) => [u.status === 'archived' ? 'עזב/ה את הקבוצה' : ({ rookie: 'רוקי', member: 'חבר/ת צוות', team_lead: 'רש"צ', captain: 'קפטן/ית', mentor: 'מנטור/ית' })[u.position], M.gradeLabel(u)].filter(Boolean).join(' · ')
+export const roleLine = (M, u) => [...new Set([u.status === 'archived' ? 'עזב/ה את הקבוצה' : ({ member: 'חבר/ת צוות', team_lead: 'רש"צ', captain: 'קפטן/ית', mentor: 'מנטור/ית' })[u.position], M.gradeLabel(u)])].filter(Boolean).join(' · ')
 export const fmtShort = (d) => new Date(d).toLocaleDateString('he-IL', { day: 'numeric', month: 'numeric' })
 export { BadgeCheck }

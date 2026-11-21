@@ -50,4 +50,17 @@ select t.eq((select count(*) from trainings.events where user_id = t.tid('b') an
 select t.eq((select count(*) from trainings.legacy_people where claimed_by = t.tid('b')), 1::bigint, 'legacy marked as claimed');
 select t.eq((select (trainings.import_firestore(j) -> 'matched')::int from imp_payload), 3, 'a re-run after linking goes to the linked member');
 select t.eq((select count(*) from trainings.certs c join trainings.legacy_people l on l.id = c.user_id), 0::bigint, 'nothing left on legacy ids');
+
+-- NeatSystem: someone added ahead of time, certified before they ever signed in
+select trainings.item_id('build', 'אומים') as nuts \gset
+set role authenticated;
+select t.login(t.tid('mentor'));
+select hub.invite_member('kid@tr.test', 'ילד מראש', 'build') as kid \gset
+select t.login(t.tid('lead'));
+select trainings_api.grant(:'kid', :'nuts');
+reset role;
+select t.eq(trainings.is_member(:'kid', 'build'), true, 'a profile made ahead of time is a member');
+insert into auth.users (id, email) values ('00000000-0000-0000-0000-00000000c1d0', 'kid@tr.test');
+select t.eq((select count(*) from trainings.certs where user_id = '00000000-0000-0000-0000-00000000c1d0' and item = trainings.item_id('build', 'אומים')), 1::bigint, 'their certification followed them when they signed in');
+select t.eq((select count(*) from trainings.certs where user_id = :'kid'), 0::bigint, 'nothing left on the old id');
 \echo TRAININGS IMPORT TESTS PASSED

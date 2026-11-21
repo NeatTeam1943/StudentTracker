@@ -29,12 +29,11 @@ export function ItemPage() {
         <Card>
           <div className="w5">מי מלמד/ת את זה</div>
           {teachers.length ? <div className="row wrap" style={{ marginTop: 8, gap: 12 }}>{teachers.map((x) => <span key={x.id} className="row" style={{ gap: 6 }}><Avatar name={x.full_name} src={x.avatar_url} size={28} />{x.full_name}</span>)}</div>
-            : <div className="foot c2">עוד אין מי שמוסמך/ת ללמד — הרש"צ ילמד.</div>}
+            : <div className="foot c2">עוד אין מלמדים</div>}
           <div className="foot cm" style={{ marginTop: 8 }}>{holders.length} מוסמכים בסך הכל</div>
         </Card>
         {canG && (
           <Card className="b" title={<span className="row"><BadgeCheck size={18} aria-hidden />הסמכה</span>}>
-            <div className="foot c2" style={{ marginBottom: 8 }}>מסמיכים אחרי שראיתם בסדנה. אפשר להסמיך גם מי שעוד לא עמד/ה בדרישות (פתיחה מוקדמת).</div>
             {pool.length ? <div className="list">{pool.map((x) => (
               <div key={x.id} className="lrow">
                 <Avatar name={x.full_name} src={x.avatar_url} size={32} />

@@ -18,7 +18,7 @@ export function gradeOf(gradYear, today = new Date()) {
 
 export const STATE_HE = { locked: 'נעול', open: 'פתוח ללמידה', held: 'מוסמך/ת' }
 export const GATE_HE = { 9: "ט'", 10: "י'", 11: "יא'", 12: "יב'", 99: 'מנטורים' }
-export const ROLE_HE = { rookie: 'רוקי', member: 'חבר/ת צוות', team_lead: 'רש"צ', captain: 'קפטן/ית', mentor: 'מנטור/ית' }
+export const ROLE_HE = { member: 'חבר/ת צוות', team_lead: 'רש"צ', captain: 'קפטן/ית', mentor: 'מנטור/ית' }
 const GRADE_HE = { 7: "ז'", 8: "ח'", 9: "ט'", 10: "י'", 11: "יא'", 12: "יב'" }
 
 const by = (k) => (a, b) => (a[k] ?? 0) - (b[k] ?? 0)
@@ -81,10 +81,11 @@ export function buildModel(S, hostPeople, meId) {
   /** Same rules as trainings.membership() in SQL. */
   M.membership = (uid, catId) => {
     const u = P.get(uid), c = catBy.get(catId)
-    if (!u || !c || isMentor(u)) return null
+    if (!u || !c) return null
     const m = mships.get(key(uid, catId))
     if (m?.kind === 'paused' || (m && !m.active)) return { kind: m.kind, active: false }
-    if (c.kind === 'team' && u.team === c.team) return { kind: 'team', active: isActive(u) }
+    // a mentor belongs to their team, or to every team when they have none (as trainings.membership())
+    if (c.kind === 'team' && (u.team === c.team || (isMentor(u) && !u.team))) return { kind: 'team', active: isActive(u) }
     if (c.kind === 'special' && access.has(key(uid, catId))) return { kind: 'special', active: isActive(u) }
     if (m?.kind === 'extra') return { kind: 'extra', active: isActive(u) }
     if (M.heldIn(uid, catId).length) return { kind: 'former', active: false }
@@ -126,6 +127,7 @@ export function buildModel(S, hostPeople, meId) {
   M.groupStatus = (uid, g) => ({ met: (g.ids ?? []).filter((id) => M.isHeld(uid, id)).length, need: g.mode === 'all' ? g.ids.length : Math.min(g.n ?? 1, g.ids.length), ...g })
   M.nextToLearn = (uid) => {
     const u = P.get(uid), own = M.teamCategory(u?.team)?.id, out = []
+    if (isMentor(u)) return out
     for (const c of M.categoriesOf(uid)) if (M.isMember(uid, c.id)) for (const i of M.itemsOf(c.id)) if (M.stateOf(uid, i) === 'open') out.push(i)
     return out.sort((a, b) => (a.category === own ? 0 : 1) - (b.category === own ? 0 : 1) || M.levelOf(a) - M.levelOf(b) || a.sort - b.sort)
   }

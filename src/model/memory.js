@@ -68,7 +68,7 @@ function seed(people) {
   for (const p of people) {
     if (p.position === 'mentor' || !p.team || p.status === 'pending' || p.status === 'rejected') continue
     const list = S.items.filter((i) => i.category === p.team)
-    const share = { team_lead: 0.85, captain: 0.9, member: 0.45, rookie: 0.15 }[p.position] ?? 0.3
+    const share = { team_lead: 0.85, captain: 0.9, member: 0.45 }[p.position] ?? 0.3
     const k = Math.round(list.length * share * (0.7 + (hash(p.id) % 30) / 100))
     list.slice(0, k).forEach((i, j) => {
       const at = new Date(t0 + (j * 3 + (hash(p.id) % 5)) * 864e5).toISOString()
@@ -77,7 +77,7 @@ function seed(people) {
     })
     if (hash(p.id) % 3 === 0) S.favorites.push({ user: p.id, category: p.team, text: list[Math.min(2, list.length - 1)]?.name ?? '' })
   }
-  const cnc = people.filter((p) => p.status === 'active' && p.team === 'build' && p.position !== 'rookie').slice(0, 3)
+  const cnc = people.filter((p) => p.status === 'active' && p.team === 'build' && p.position === 'member').slice(0, 3)
   cnc.forEach((p, j) => { S.access.push({ user: p.id, category: 'cnc' }); S.items.filter((i) => i.category === 'cnc').slice(0, 2 + j).forEach((i) => S.certs.push({ user: p.id, item: i.id, at: new Date(t0 + j * 864e5).toISOString(), by: null, teach: false, teachAt: null, early: false })) })
   const note = people.find((p) => p.team === 'build' && p.position === 'member' && p.status === 'active')
   if (note) S.events.push({ id: id('e'), at: '2026-11-12T16:40:00Z', by: leadOf('build'), type: 'note', user: note.id, category: 'build', item: null, text: 'עבד/ה יפה על השלדה. מוכן/ה להתחיל ללמוד מסור סרט.', early: false })
@@ -150,7 +150,6 @@ export function memoryBackend() {
     join({ p_user, p_cat }) {
       needGrant(p_cat)
       if (M().isMember(p_user, p_cat)) return
-      if (M().person(p_user)?.position === 'mentor') deny('מנטורים לא חברים בקטגוריות')
       S.memberships = S.memberships.filter((m) => !(m.user === p_user && m.category === p_cat))
       S.memberships.push({ user: p_user, category: p_cat, kind: 'extra', active: true, joinedAt: now() })
       ev('joined', p_user, p_cat); syncRank(p_user, p_cat)
@@ -237,6 +236,7 @@ export function memoryBackend() {
       if (p_locked) S.locks.push({ user: p_user, category: p_cat })
       ev(p_locked ? 'lead_locked' : 'lead_unlocked', p_user, p_cat)
     },
+    link_legacy() { deny('אין רשומות מ-StudentTracker בתצוגה המקדימה') },
     set_access({ p_cat, p_user, p_on }) {
       if (!host().can('trainings.manage') && !M().canGrant(me(), p_cat)) deny()
       if (S.categories.find((c) => c.id === p_cat)?.kind !== 'special') deny('רק להסמכה מיוחדת יש רשימת גישה')
