@@ -5,7 +5,6 @@
   "description": "Trainings (StudentTracker / רישיון בנאי) — a NeatSystem tab. Runs inside NeatSystem as the git submodule systems/trainings.",
   "type": "module",
   "scripts": {
-    "test": "node --test tests/*.test.js",
-    "import:firestore": "node scripts/firestore-import.mjs"
+    "test": "node --test tests/*.test.js"
   }
 }

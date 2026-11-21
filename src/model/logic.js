@@ -24,7 +24,11 @@ const GRADE_HE = { 7: "ז'", 8: "ח'", 9: "ט'", 10: "י'", 11: "יא'", 12: "י
 const by = (k) => (a, b) => (a[k] ?? 0) - (b[k] ?? 0)
 const key = (u, x) => `${u}|${x}`
 
-export function buildModel(S, people, meId) {
+export function buildModel(S, hostPeople, meId) {
+  // people imported from StudentTracker who haven't joined NeatSystem yet keep
+  // their records under a placeholder until a mentor links them (trainings.link_legacy)
+  const legacy = (S.legacy ?? []).map((l) => ({ id: l.id, full_name: l.name, status: 'legacy', position: 'member', team: null, grad_year: null, is_admin: false, legacy: true }))
+  const people = [...hostPeople, ...legacy]
   const P = new Map(people.map((p) => [p.id, p]))
   const cats = [...S.categories].sort((a, b) => a.sort - b.sort || a.name.localeCompare(b.name, 'he'))
   const catBy = new Map(cats.map((c) => [c.id, c]))
@@ -52,7 +56,8 @@ export function buildModel(S, people, meId) {
 
   const M = {
     S, me, person, nameOf, isMentor, isActive, grade, gradeLabel, perms,
-    people: () => people.filter((p) => p.status === 'active' || p.status === 'archived'),
+    legacy: () => legacy,
+    people: () => hostPeople.filter((p) => p.status === 'active' || p.status === 'archived'),
     categories: () => cats,
     category: (id) => catBy.get(id) ?? null,
     teamCategory: (team) => cats.find((c) => c.kind === 'team' && c.team === team) ?? null,
@@ -191,6 +196,10 @@ export function buildModel(S, people, meId) {
       case 'lead_locked': return `העריכה של ${who} ננעלה`
       case 'lead_unlocked': return `העריכה של ${who} נפתחה`
       case 'log_cleared': return `היומן של ${who} נוקה (${e.text} רשומות)`
+      case 'imported_firestore': return 'יובאו הנתונים מ-StudentTracker'
+      case 'legacy_linked': return `הרשומות של ${e.text} מ-StudentTracker שויכו ל${who}`
+      case 'promoted': return `${who} קודם/ה ל${rk(e.item)}`
+      case 'team_joined': return `${who} צורף/ה לצוות`.trim()
       default: return String(e.type ?? '').replace(/_/g, ' ')
     }
   }
